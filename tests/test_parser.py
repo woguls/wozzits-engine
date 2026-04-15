@@ -1,6 +1,6 @@
 import unittest
-from .parser import parse_program
-from .grammar import Program, Interface
+from Wozzits.parser import parse_program
+from Wozzits.grammar import Program, Interface
 
 class TestParseProgram(unittest.TestCase):
 
