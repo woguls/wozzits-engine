@@ -22,6 +22,9 @@ using LogCallback = void (*)(LogLevel level, const char *message);
 // Set a custom logging callback; default logs to console
 void set_log_callback(LogCallback callback);
 
+// Set minimum log level for filtering
+void set_min_log_level(LogLevel level);
+
 // Core logging functions
 void log_debug(const char *message);
 void log_info(const char *message);
@@ -31,6 +34,9 @@ void log_critical(const char *message);
 
 // Flush all thread-local buffers to the main callback
 void flush_thread_local_logs();
+
+// Shutdown logging system and flush all pending logs
+void shutdown_logging();
 
 // Error codes for platform operations
 enum class ErrorCode : uint8_t
