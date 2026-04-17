@@ -37,6 +37,9 @@ namespace
         std::fprintf(stderr, "[%s] %s\n", level_str, message);
     }
 
+    // Global callback with atomic access (moved before ThreadLocalLogBuffer)
+    std::atomic<LogCallback> g_log_callback{default_log_callback};
+
     // Thread-local log buffer structure
     struct ThreadLocalLogBuffer
     {
@@ -76,9 +79,6 @@ namespace
 
     // Thread-local storage for log buffers
     thread_local ThreadLocalLogBuffer g_thread_local_buffer;
-
-    // Global callback with atomic access
-    std::atomic<LogCallback> g_log_callback{default_log_callback};
 
 } // anonymous namespace
 
