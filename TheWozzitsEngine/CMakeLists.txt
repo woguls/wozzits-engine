@@ -3,6 +3,10 @@
 cmake_minimum_required(VERSION 3.14)
 project(TheWozzitsEngine VERSION 1.0.0)
 
+# Force the use of clang-cl compiler
+set(CMAKE_C_COMPILER "clang-cl")
+set(CMAKE_CXX_COMPILER "clang-cl")
+
 # Set runtime library for MSVC to use dynamic runtime (MD/MDd)
 if(MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
@@ -55,14 +59,10 @@ target_link_libraries(logging_tests_asan
 )
 
 # AddressSanitizer is only supported by GCC and Clang
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(logging_tests_asan PRIVATE -fsanitize=address)
-    target_link_options(logging_tests_asan PRIVATE -fsanitize=address)
-endif()
+target_compile_options(logging_tests_asan PRIVATE -fsanitize=address)
+target_link_options(logging_tests_asan PRIVATE -fsanitize=address)
 
 # Build the logging tests executable with ThreadSanitizer (TSAN)
-# Note: To build this target, configure CMake with:
-# cmake -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang-cl.exe" -S . -B build_tsan
 add_executable(logging_tests_tsan
     tests/platform/logging/test_logging.cpp
 )
@@ -74,7 +74,5 @@ target_link_libraries(logging_tests_tsan
 )
 
 # TSAN flags for Clang/LLVM
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(logging_tests_tsan PRIVATE -fsanitize=thread)
-    target_link_options(logging_tests_tsan PRIVATE -fsanitize=thread)
-endif()
+target_compile_options(logging_tests_tsan PRIVATE -fsanitize=thread)
+target_link_options(logging_tests_tsan PRIVATE -fsanitize=thread)
