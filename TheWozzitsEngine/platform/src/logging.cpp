@@ -63,8 +63,6 @@ namespace
                 return;
 
             // Get the current callback
-            static std::mutex callback_mutex;
-            std::lock_guard<std::mutex> lock(callback_mutex);
             auto callback = g_log_callback.load(std::memory_order_acquire);
 
             // Process all messages

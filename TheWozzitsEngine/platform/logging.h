@@ -49,13 +49,13 @@ enum class ErrorCode : uint8_t
 template <typename T>
 struct Result
 {
-    bool success;
+    bool ok;
     ErrorCode code;
     std::string message;
     T value;
 
     // Constructors
-    static Result<T> success(const T &val, const std::string &msg = "")
+    static Result<T> wozzits_success(const T &val, const std::string &msg = "")
     {
         return {true, ErrorCode::Success, msg, val};
     }
@@ -68,14 +68,14 @@ struct Result
     // Convenience accessors
     T &&get() && { return std::move(value); }
     const T &get() const & { return value; }
-    operator bool() const { return success; }
+    operator bool() const { return ok; }
 };
 
 // Specialization for void-returning operations
 template <>
 struct Result<void>
 {
-    bool success;
+    bool ok;
     ErrorCode code;
     std::string message;
 
@@ -89,22 +89,24 @@ struct Result<void>
         return {false, code, msg};
     }
 
-    operator bool() const { return success; }
+    operator bool() const { return ok; }
 };
 
 // Helper macros for common patterns
 #define RETURN_IF_NULL(ptr, msg) \
-    if (!(ptr)) return Result<decltype(ptr)>::failure(ErrorCode::InvalidArgument, msg ? msg : "Null pointer")
+    if (!(ptr))                  \
+    return Result<decltype(ptr)>::failure(ErrorCode::InvalidArgument, msg ? msg : "Null pointer")
 
 #define RETURN_IF_FALSE(cond, msg) \
-    if (!(cond)) return Result<void>::failure(ErrorCode::InvalidArgument, msg ? msg : "Condition failed")
+    if (!(cond))                   \
+    return Result<void>::failure(ErrorCode::InvalidArgument, msg ? msg : "Condition failed")
 
-#define PLATFORM_ASSERT(cond, msg)                                       \
-    do                                                                   \
-    {                                                                    \
-        if (!(cond))                                                     \
-        {                                                                \
-            log_error("Assertion failed: " #cond " - "(msg ? msg : "")); \
-            assert(cond);                                                \
-        }                                                                \
+#define PLATFORM_ASSERT(cond, msg)                                                           \
+    do                                                                                       \
+    {                                                                                        \
+        if (!(cond))                                                                         \
+        {                                                                                    \
+            log_error(std::string("Assertion failed: ") + #cond + " - " + (msg ? msg : "")); \
+            assert(cond);                                                                    \
+        }                                                                                    \
     } while (0)
