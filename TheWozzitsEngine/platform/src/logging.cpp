@@ -93,7 +93,10 @@ namespace
             {
                 if (!g_shutdown.load(std::memory_order_acquire))
                 {
-                    callback(msg.first, msg.second.c_str());
+                    if (callback)
+                    {
+                        callback(msg.first, msg.second.c_str());
+                    }
                 }
             }
         }

@@ -373,7 +373,7 @@ TEST(LoggingTest, CallbackChangeDuringLogging)
     std::vector<std::string> g_test_log_output_2;
     std::mutex g_test_log_mutex_2;
 
-    auto test_callback_2 = [](LogLevel level, const char *message)
+    auto test_callback_2 = [&g_test_log_output_2, &g_test_log_mutex_2](LogLevel level, const char *message)
     {
         std::lock_guard<std::mutex> lock(g_test_log_mutex_2);
         g_test_log_output_2.emplace_back(message);

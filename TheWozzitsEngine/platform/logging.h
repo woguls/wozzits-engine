@@ -5,6 +5,7 @@
 #include <atomic>
 #include <mutex>
 #include <vector>
+#include <functional>
 
 // Log levels for the logging system
 enum class LogLevel : uint8_t
@@ -17,7 +18,7 @@ enum class LogLevel : uint8_t
 };
 
 // Function pointer type for custom logging callbacks
-using LogCallback = void (*)(LogLevel level, const char *message);
+using LogCallback = std::function<void(LogLevel level, const char *message)>;
 
 // Set a custom logging callback; default logs to console
 void set_log_callback(LogCallback callback);
