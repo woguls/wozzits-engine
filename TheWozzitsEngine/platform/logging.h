@@ -2,6 +2,9 @@
 
 #include <cstdint>
 #include <string>
+#include <atomic>
+#include <mutex>
+#include <vector>
 
 // Log levels for the logging system
 enum class LogLevel : uint8_t
@@ -25,6 +28,9 @@ void log_info(const char *message);
 void log_warning(const char *message);
 void log_error(const char *message);
 void log_critical(const char *message);
+
+// Flush all thread-local buffers to the main callback
+void flush_thread_local_logs();
 
 // Error codes for platform operations
 enum class ErrorCode : uint8_t
