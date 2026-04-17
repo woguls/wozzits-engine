@@ -23,17 +23,12 @@ enable_testing()
 # Build the logging tests executable
 add_executable(logging_tests
     tests/platform/logging/test_logging.cpp
-    platform/src/logging.cpp
 )
 
 target_link_libraries(logging_tests
     GTest::gtest
     GTest::gtest_main
+    wozzits_platform_logger
 )
 
 add_test(NAME logging_tests COMMAND logging_tests)
-
-
-
-
-
