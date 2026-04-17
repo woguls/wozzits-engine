@@ -42,3 +42,20 @@ target_link_libraries(logging_tests
 )
 
 add_test(NAME logging_tests COMMAND logging_tests)
+
+# Build the logging tests executable with AddressSanitizer
+add_executable(logging_tests_asan
+    tests/platform/logging/test_logging.cpp
+)
+
+target_link_libraries(logging_tests_asan
+    GTest::gtest
+    GTest::gtest_main
+    wozzits_platform_logger
+)
+
+# AddressSanitizer is only supported by GCC and Clang
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(logging_tests_asan PRIVATE -fsanitize=address)
+    target_link_options(logging_tests_asan PRIVATE -fsanitize=address)
+endif()
