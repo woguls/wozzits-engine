@@ -1,4 +1,4 @@
-#include "logging.h"
+#include "../logging.h"
 
 #include <iostream>
 #include <cstdarg>
@@ -6,6 +6,7 @@
 #include <cassert>
 #include <thread>
 #include <sstream>
+#include <vector>
 
 namespace
 {
@@ -39,11 +40,11 @@ namespace
     struct ThreadLocalLogBuffer
     {
         std::vector<std::pair<LogLevel, std::string>> messages;
-        
+
         // Maximum messages to store before auto-flush
         static constexpr size_t MAX_MESSAGES = 1000;
-        
-        void add_message(LogLevel level, const std::string& message)
+
+        void add_message(LogLevel level, const std::string &message)
         {
             messages.emplace_back(level, message);
             if (messages.size() >= MAX_MESSAGES)
@@ -51,29 +52,30 @@ namespace
                 flush();
             }
         }
-        
+
         void flush()
         {
-            if (messages.empty()) return;
-            
+            if (messages.empty())
+                return;
+
             // Get the current callback
             static std::mutex callback_mutex;
             std::lock_guard<std::mutex> lock(callback_mutex);
             auto callback = g_log_callback.load(std::memory_order_acquire);
-            
+
             // Process all messages
-            for (const auto& msg : messages)
+            for (const auto &msg : messages)
             {
                 callback(msg.first, msg.second.c_str());
             }
-            
+
             messages.clear();
         }
     };
-    
+
     // Thread-local storage for log buffers
     thread_local ThreadLocalLogBuffer g_thread_local_buffer;
-    
+
     // Global callback with atomic access
     std::atomic<LogCallback> g_log_callback{default_log_callback};
 
