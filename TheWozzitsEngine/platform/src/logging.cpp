@@ -1,6 +1,7 @@
 #include "../logging.h"
 
 #include <iostream>
+#include <cstdio>
 #include <cstdarg>
 #include <cstring>
 #include <cassert>
