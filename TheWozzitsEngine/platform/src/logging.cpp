@@ -39,8 +39,9 @@ namespace
         std::fprintf(stderr, "[%s] %s\n", level_str, message);
     }
 
-    // Global callback with atomic access
-    std::atomic<LogCallback> g_log_callback{default_log_callback};
+    // Global callback with mutex protection (std::function is not trivially copyable)
+    LogCallback g_log_callback{default_log_callback};
+    std::mutex g_callback_mutex;
 
     // Minimum log level for filtering
     std::atomic<LogLevel> g_min_log_level{LogLevel::Debug};
@@ -82,8 +83,9 @@ namespace
             // Lock to prevent concurrent flushes
             std::lock_guard<std::mutex> lock(flush_mutex);
 
-            // Get the current callback
-            auto callback = g_log_callback.load(std::memory_order_acquire);
+            // Get the current callback with mutex protection
+            std::lock_guard<std::mutex> callback_lock(g_callback_mutex);
+            auto callback = g_log_callback;
 
             // Make a local copy to avoid holding lock during callback
             std::vector<std::pair<LogLevel, std::string>> local_copy = std::move(messages);
@@ -116,7 +118,8 @@ namespace
 // Public API
 void set_log_callback(LogCallback callback)
 {
-    g_log_callback.store(callback ? callback : default_log_callback, std::memory_order_release);
+    std::lock_guard<std::mutex> lock(g_callback_mutex);
+    g_log_callback = callback ? callback : default_log_callback;
 }
 
 void set_min_log_level(LogLevel level)
