@@ -82,18 +82,15 @@ namespace
             if (messages.empty())
                 return;
 
-            // Lock to prevent concurrent flushes
             std::lock_guard<std::mutex> lock(flush_mutex);
 
-            // Get the current callback with mutex protection
+            std::vector<std::pair<WZ::LogLevel, std::string>> local_copy;
+            local_copy.swap(messages);
+
             std::lock_guard<std::mutex> callback_lock(g_callback_mutex);
             auto callback = g_log_callback;
 
-            // Make a local copy to avoid holding lock during callback
-            std::vector<std::pair<WZ::LogLevel, std::string>> local_copy = std::move(messages);
-
-            // Process all messages
-            for (const auto &msg : local_copy)
+            for (const auto& msg : local_copy)
             {
                 if (!g_shutdown.load(std::memory_order_acquire))
                 {
@@ -120,11 +117,21 @@ namespace
 namespace WZ {
 
     // Public API
+    //void set_log_callback(LogCallback callback)
+    //{
+    //    std::lock_guard<std::mutex> lock(g_callback_mutex);
+    //    g_log_callback = callback ? callback : default_log_callback;
+    //}
+
     void set_log_callback(LogCallback callback)
     {
+        // Flush messages using the old callback first
+        g_thread_local_buffer.flush();
+
         std::lock_guard<std::mutex> lock(g_callback_mutex);
         g_log_callback = callback ? callback : default_log_callback;
     }
+
 
     void set_min_log_level(LogLevel level)
     {
