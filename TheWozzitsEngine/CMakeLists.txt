@@ -59,3 +59,22 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(logging_tests_asan PRIVATE -fsanitize=address)
     target_link_options(logging_tests_asan PRIVATE -fsanitize=address)
 endif()
+
+# Build the logging tests executable with ThreadSanitizer (TSAN)
+# Note: To build this target, configure CMake with:
+# cmake -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang-cl.exe" -S . -B build_tsan
+add_executable(logging_tests_tsan
+    tests/platform/logging/test_logging.cpp
+)
+
+target_link_libraries(logging_tests_tsan
+    GTest::gtest
+    GTest::gtest_main
+    wozzits_platform_logger
+)
+
+# TSAN flags for Clang/LLVM
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(logging_tests_tsan PRIVATE -fsanitize=thread)
+    target_link_options(logging_tests_tsan PRIVATE -fsanitize=thread)
+endif()
