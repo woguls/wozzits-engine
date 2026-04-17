@@ -1,7 +1,7 @@
 # Platform abstraction layer CMake configuration
 
 # Add the error module as a library
-add_library(wozzits_platform_logger src/logging.cpp)
+add_library(wozzits_platform_logger src/logging.cpp "assert.h")
 
 # Include the current directory for headers
 target_include_directories(wozzits_platform_logger PUBLIC

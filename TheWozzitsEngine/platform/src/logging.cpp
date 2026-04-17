@@ -1,4 +1,5 @@
 #include "../logging.h"
+#include "../assert.h"
 
 #include <iostream>
 #include <cstdio>
@@ -11,28 +12,29 @@
 #include <atomic>
 #include <mutex>
 
+
 namespace
 {
 
     // Default log callback: prints to stderr
-    void default_log_callback(LogLevel level, const char *message)
+    void default_log_callback(WZ::LogLevel level, const char *message)
     {
         const char *level_str = nullptr;
         switch (level)
         {
-        case LogLevel::Debug:
+        case WZ::LogLevel::Debug:
             level_str = "DEBUG";
             break;
-        case LogLevel::Info:
+        case WZ::LogLevel::Info:
             level_str = "INFO";
             break;
-        case LogLevel::Warning:
+        case WZ::LogLevel::Warning:
             level_str = "WARNING";
             break;
-        case LogLevel::Error:
+        case WZ::LogLevel::Error:
             level_str = "ERROR";
             break;
-        case LogLevel::Critical:
+        case WZ::LogLevel::Critical:
             level_str = "CRITICAL";
             break;
         }
@@ -40,11 +42,11 @@ namespace
     }
 
     // Global callback with mutex protection (std::function is not trivially copyable)
-    LogCallback g_log_callback{default_log_callback};
+    WZ::LogCallback g_log_callback{default_log_callback};
     std::mutex g_callback_mutex;
 
     // Minimum log level for filtering
-    std::atomic<LogLevel> g_min_log_level{LogLevel::Debug};
+    std::atomic<WZ::LogLevel> g_min_log_level{WZ::LogLevel::Debug};
 
     // Shutdown flag
     std::atomic<bool> g_shutdown{false};
@@ -52,7 +54,7 @@ namespace
     // Thread-local log buffer structure
     struct ThreadLocalLogBuffer
     {
-        std::vector<std::pair<LogLevel, std::string>> messages;
+        std::vector<std::pair<WZ::LogLevel, std::string>> messages;
 
         // Maximum messages to store before auto-flush
         static constexpr size_t MAX_MESSAGES = 1000;
@@ -60,7 +62,7 @@ namespace
         // Mutex for thread safety during flush
         std::mutex flush_mutex;
 
-        void add_message(LogLevel level, const std::string &message)
+        void add_message(WZ::LogLevel level, const std::string &message)
         {
             // Check if we should log this level
             if (level < g_min_log_level.load(std::memory_order_acquire))
@@ -88,7 +90,7 @@ namespace
             auto callback = g_log_callback;
 
             // Make a local copy to avoid holding lock during callback
-            std::vector<std::pair<LogLevel, std::string>> local_copy = std::move(messages);
+            std::vector<std::pair<WZ::LogLevel, std::string>> local_copy = std::move(messages);
 
             // Process all messages
             for (const auto &msg : local_copy)
@@ -115,53 +117,56 @@ namespace
 
 } // anonymous namespace
 
-// Public API
-void set_log_callback(LogCallback callback)
-{
-    std::lock_guard<std::mutex> lock(g_callback_mutex);
-    g_log_callback = callback ? callback : default_log_callback;
-}
+namespace WZ {
 
-void set_min_log_level(LogLevel level)
-{
-    g_min_log_level.store(level, std::memory_order_release);
-}
+    // Public API
+    void set_log_callback(LogCallback callback)
+    {
+        std::lock_guard<std::mutex> lock(g_callback_mutex);
+        g_log_callback = callback ? callback : default_log_callback;
+    }
 
-void log_debug(const char *message)
-{
-    g_thread_local_buffer.add_message(LogLevel::Debug, message ? message : "");
-}
+    void set_min_log_level(LogLevel level)
+    {
+        g_min_log_level.store(level, std::memory_order_release);
+    }
 
-void log_info(const char *message)
-{
-    g_thread_local_buffer.add_message(LogLevel::Info, message ? message : "");
-}
+    void log_debug(const char* message)
+    {
+        g_thread_local_buffer.add_message(LogLevel::Debug, message ? message : "");
+    }
 
-void log_warning(const char *message)
-{
-    g_thread_local_buffer.add_message(LogLevel::Warning, message ? message : "");
-}
+    void log_info(const char* message)
+    {
+        g_thread_local_buffer.add_message(LogLevel::Info, message ? message : "");
+    }
 
-void log_error(const char *message)
-{
-    g_thread_local_buffer.add_message(LogLevel::Error, message ? message : "");
-}
+    void log_warning(const char* message)
+    {
+        g_thread_local_buffer.add_message(LogLevel::Warning, message ? message : "");
+    }
 
-void log_critical(const char *message)
-{
-    g_thread_local_buffer.add_message(LogLevel::Critical, message ? message : "");
-}
+    void log_error(const char* message)
+    {
+        g_thread_local_buffer.add_message(LogLevel::Error, message ? message : "");
+    }
 
-void flush_thread_local_logs()
-{
-    g_thread_local_buffer.flush();
-}
+    void log_critical(const char* message)
+    {
+        g_thread_local_buffer.add_message(LogLevel::Critical, message ? message : "");
+    }
 
-void shutdown_logging()
-{
-    // Signal shutdown
-    g_shutdown.store(true, std::memory_order_release);
-    
-    // Flush current thread's buffer
-    flush_thread_local_logs();
+    void flush_thread_local_logs()
+    {
+        g_thread_local_buffer.flush();
+    }
+
+    void shutdown_logging()
+    {
+        // Signal shutdown
+        g_shutdown.store(true, std::memory_order_release);
+
+        // Flush current thread's buffer
+        flush_thread_local_logs();
+    }
 }

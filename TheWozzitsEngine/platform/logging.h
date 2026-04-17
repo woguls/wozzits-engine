@@ -7,113 +7,99 @@
 #include <vector>
 #include <functional>
 
-// Log levels for the logging system
-enum class LogLevel : uint8_t
+namespace WZ
 {
-    Debug = 0,
-    Info,
-    Warning,
-    Error,
-    Critical
-};
-
-// Function pointer type for custom logging callbacks
-using LogCallback = std::function<void(LogLevel level, const char *message)>;
-
-// Set a custom logging callback; default logs to console
-void set_log_callback(LogCallback callback);
-
-// Set minimum log level for filtering
-void set_min_log_level(LogLevel level);
-
-// Core logging functions
-void log_debug(const char *message);
-void log_info(const char *message);
-void log_warning(const char *message);
-void log_error(const char *message);
-void log_critical(const char *message);
-
-// Flush all thread-local buffers to the main callback
-void flush_thread_local_logs();
-
-// Shutdown logging system and flush all pending logs
-void shutdown_logging();
-
-// Error codes for platform operations
-enum class ErrorCode : uint8_t
-{
-    Success = 0,
-    InvalidArgument,
-    OutOfMemory,
-    PlatformFailure,
-    FileNotFound,
-    PermissionDenied,
-    Timeout,
-    Unknown
-};
-
-// Result type for operations that may fail
-template <typename T>
-struct Result
-{
-    bool ok;
-    ErrorCode code;
-    std::string message;
-    T value;
-
-    // Constructors
-    static Result<T> wozzits_success(const T &val, const std::string &msg = "")
+    // Log levels for the logging system
+    enum class LogLevel : uint8_t
     {
-        return {true, ErrorCode::Success, msg, val};
-    }
+        Debug = 0,
+        Info,
+        Warning,
+        Error,
+        Critical
+    };
 
-    static Result<T> failure(ErrorCode code, const std::string &msg = "")
+    // Function pointer type for custom logging callbacks
+    using LogCallback = std::function<void(LogLevel level, const char* message)>;
+
+    // Set a custom logging callback; default logs to console
+    void set_log_callback(LogCallback callback);
+
+    // Set minimum log level for filtering
+    void set_min_log_level(LogLevel level);
+
+    // Core logging functions
+    void log_debug(const char* message);
+    void log_info(const char* message);
+    void log_warning(const char* message);
+    void log_error(const char* message);
+    void log_critical(const char* message);
+
+    // Flush all thread-local buffers to the main callback
+    void flush_thread_local_logs();
+
+    // Shutdown logging system and flush all pending logs
+    void shutdown_logging();
+
+    // Error codes for platform operations
+    enum class ErrorCode : uint8_t
     {
-        return {false, code, msg, T{}};
-    }
+        Success = 0,
+        InvalidArgument,
+        OutOfMemory,
+        PlatformFailure,
+        FileNotFound,
+        PermissionDenied,
+        Timeout,
+        Unknown
+    };
 
-    // Convenience accessors
-    T &&get() && { return std::move(value); }
-    const T &get() const & { return value; }
-    operator bool() const { return ok; }
-};
-
-// Specialization for void-returning operations
-template <>
-struct Result<void>
-{
-    bool ok;
-    ErrorCode code;
-    std::string message;
-
-    static Result<void> success(const std::string &msg = "")
+    // Result type for operations that may fail
+    template <typename T>
+    struct Result
     {
-        return {true, ErrorCode::Success, msg};
-    }
+        bool ok;
+        ErrorCode code;
+        std::string message;
+        T value;
 
-    static Result<void> failure(ErrorCode code, const std::string &msg = "")
+        // Constructors
+        static Result<T> success(const T& val, const std::string& msg = "")
+        {
+            return { true, ErrorCode::Success, msg, val };
+        }
+
+        static Result<T> failure(ErrorCode code, const std::string& msg = "")
+        {
+            return { false, code, msg, T{} };
+        }
+
+        // Convenience accessors
+        T&& get()&& { return std::move(value); }
+        const T& get() const& { return value; }
+        operator bool() const { return ok; }
+    };
+
+    // Specialization for void-returning operations
+    template <>
+    struct Result<void>
     {
-        return {false, code, msg};
-    }
+        bool ok;
+        ErrorCode code;
+        std::string message;
 
-    operator bool() const { return ok; }
-};
+        static Result<void> success(const std::string& msg = "")
+        {
+            return { true, ErrorCode::Success, msg };
+        }
 
-// Helper macros for common patterns
-#define RETURN_IF_NULL(ptr, msg) \
-    if (!(ptr))                  \
-    return Result<decltype(ptr)>::failure(ErrorCode::InvalidArgument, msg ? msg : "Null pointer")
+        static Result<void> failure(ErrorCode code, const std::string& msg = "")
+        {
+            return { false, code, msg };
+        }
 
-#define RETURN_IF_FALSE(cond, msg) \
-    if (!(cond))                   \
-    return Result<void>::failure(ErrorCode::InvalidArgument, msg ? msg : "Condition failed")
+        operator bool() const { return ok; }
+    };
 
-#define PLATFORM_ASSERT(cond, msg)                                                           \
-    do                                                                                       \
-    {                                                                                        \
-        if (!(cond))                                                                         \
-        {                                                                                    \
-            log_error(std::string("Assertion failed: ") + #cond + " - " + (msg ? msg : "")); \
-            assert(cond);                                                                    \
-        }                                                                                    \
-    } while (0)
+}
+

@@ -15,7 +15,7 @@ namespace
     std::mutex g_test_log_mutex;
 
     // Test callback that stores logs in our buffer
-    void test_log_callback(LogLevel level, const char *message)
+    void test_log_callback(WZ::LogLevel level, const char *message)
     {
         std::lock_guard<std::mutex> lock(g_test_log_mutex);
         g_test_log_output.emplace_back(message);
@@ -60,12 +60,14 @@ namespace
         {
             thread.join();
         }
-        
+
         // Small delay to ensure thread-local destructors have run
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
 } // namespace
+
+using namespace WZ;
 
 // TEST 1: Single-thread baseline
 TEST(LoggingTest, SingleThreadBaseline)
@@ -277,7 +279,7 @@ TEST(LoggingTest, LogLevelFiltering)
     flush_thread_local_logs();
 
     auto output = get_sorted_output();
-    
+
     // Only Warning, Error, and Critical should appear
     EXPECT_EQ(output.size(), 3);
     EXPECT_EQ(count_occurrences("debug message"), 0);
@@ -357,7 +359,7 @@ TEST(LoggingTest, ThreadAutoFlushOnExit)
                   });
 
     t.join();
-    
+
     // Small delay to ensure destructor has run
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
@@ -383,17 +385,17 @@ TEST(LoggingTest, CallbackChangeDuringLogging)
     clear_test_output();
 
     log_info("before callback change");
-    
+
     // Change callback
     set_log_callback(test_callback_2);
-    
+
     log_info("after callback change");
 
     flush_thread_local_logs();
 
     // First message should be in original callback
     EXPECT_EQ(count_occurrences("before callback change"), 1);
-    
+
     // Second message should be in new callback
     {
         std::lock_guard<std::mutex> lock(g_test_log_mutex_2);

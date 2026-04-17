@@ -1,0 +1,192 @@
+# instructions-tests.txt
+
+Goal: Generate unit tests verifying that the platform logging system is thread-safe.
+
+The tests must validate observable behavior of the logging API under concurrency.
+
+Do NOT test implementation details.
+Do NOT rely on private members of the logger.
+Tests must interact only with the public logging interface.
+
+Assume the logging API provides functions similar to:
+
+```
+LogInfo(string message)
+LogWarning(string message)
+LogError(string message)
+```
+
+The logging backend writes to a stream, file, or memory buffer.
+
+---
+
+## TEST CATEGORIES
+
+1. Single-thread correctness
+2. Multi-thread safety
+3. Message integrity
+4. Ordering guarantees (if specified)
+5. Stress / high volume logging
+
+---
+
+## TEST 1: SINGLE THREAD BASELINE
+
+Purpose:
+Verify logging works normally without concurrency.
+
+Procedure:
+
+1. Redirect logger output to a test buffer or temporary file.
+2. Log several messages.
+3. Flush the logger if applicable.
+4. Verify:
+
+   * All messages appear
+   * No corruption
+   * Each message appears exactly once
+
+Example pattern:
+
+```
+LogInfo("A")
+LogInfo("B")
+LogInfo("C")
+```
+
+Expected output contains A, B, C.
+
+---
+
+## TEST 2: MULTI-THREAD BASIC SAFETY
+
+Purpose:
+Verify multiple threads can log simultaneously without corruption.
+
+Procedure:
+
+1. Create N threads (minimum 8).
+2. Each thread logs 100 messages.
+3. Messages must include thread id and message index.
+
+Example message format:
+
+```
+"thread=<id> msg=<index>"
+```
+
+4. Wait for all threads to complete.
+5. Flush logger.
+6. Read output.
+
+Assertions:
+
+* Total messages == N * 100
+* Every expected message appears exactly once
+* No truncated or merged lines
+
+---
+
+## TEST 3: MESSAGE ATOMICITY
+
+Purpose:
+Ensure individual log calls are not interleaved.
+
+Procedure:
+
+1. Each thread writes messages containing a recognizable structure.
+
+Example:
+
+```
+"[THREAD 3] BEGIN 42 END"
+```
+
+2. Run 16 threads, each logging 200 messages.
+
+Assertions:
+
+* Every log line must match the exact pattern
+* No line should contain fragments from multiple threads
+* Lines must not be partially written
+
+---
+
+## TEST 4: HIGH CONTENTION STRESS
+
+Purpose:
+Detect race conditions under heavy load.
+
+Procedure:
+
+1. Spawn 32 threads.
+2. Each thread logs 500–1000 messages.
+3. Use short messages to maximize contention.
+
+Assertions:
+
+* Total message count matches expected value
+* Output contains no corrupted lines
+* Test completes without deadlock or crash
+
+---
+
+## TEST 5: LARGE MESSAGE SAFETY
+
+Purpose:
+Verify thread safety with large log entries.
+
+Procedure:
+
+1. Generate messages of size 4KB–16KB.
+2. Spawn 8 threads writing 50 messages each.
+
+Assertions:
+
+* Messages are not truncated
+* Messages are not interleaved
+* Message size remains intact
+
+---
+
+## TEST IMPLEMENTATION GUIDELINES
+
+1. Use thread barriers or latches to start threads simultaneously.
+
+2. Use deterministic message formats:
+
+   "T<thread_id>-M<message_id>"
+
+3. Store expected messages in a set and compare against output.
+
+4. If logger buffers output, call Flush() before validation.
+
+5. Avoid timing-based assertions.
+
+---
+
+## SUCCESS CRITERIA
+
+The logging system is considered thread-safe if:
+
+* No messages are lost
+* No messages are duplicated
+* No messages are corrupted
+* No message fragments appear
+* All tests pass under repeated runs
+
+---
+
+## OPTIONAL EXTENSIONS
+
+Agents may optionally add tests for:
+
+* concurrent logging while logger initialization occurs
+* logging during shutdown
+* logging while flushing
+
+These tests should not rely on undefined behavior.
+
+---
+
+## END OF INSTRUCTIONS

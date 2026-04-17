@@ -1,0 +1,40 @@
+Generate a minimal cross-platform C++ platform abstraction layer for a game engine.
+
+Requirements:
+
+Architecture:
+- platform/ directory
+- OS-agnostic headers
+- OS-specific implementations
+
+Modules:
+- window
+- filesystem
+- time
+- threading
+
+Structure:
+
+platform/
+    window.h
+    filesystem.h
+    time.h
+    threading.h
+
+    windows/
+    posix/
+
+Rules:
+
+1. Headers define interfaces only.
+2. No OS headers allowed in interface headers.
+3. Windows code uses Win32.
+4. POSIX code uses pthreads and POSIX APIs.
+5. Provide factory functions where needed.
+6. Keep the design minimal and engine-friendly.
+
+Generate:
+- directory structure
+- header interfaces
+- Windows implementations
+- POSIX implementations
