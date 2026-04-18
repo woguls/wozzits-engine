@@ -1,6 +1,5 @@
-#include "Logger.h"
-#include "../core/logging.h"
-
+#include "../logger.h"
+#include "core/logger_worker.h"
 namespace WZ
 {
     Logger::Logger()

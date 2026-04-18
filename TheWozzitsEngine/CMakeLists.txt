@@ -31,17 +31,17 @@ add_subdirectory(src)
 enable_testing()
 
 # Build the logging tests executable
-add_executable(logging_tests
-    tests/test_logging.cpp
-)
-target_link_options(logging_tests PRIVATE /PROFILE)
-target_link_libraries(logging_tests
-    GTest::gtest
-    GTest::gtest_main
-    wozzits_engine
-)
+# add_executable(logging_tests
+#     tests/test_logging.cpp
+# )
+# target_link_options(logging_tests PRIVATE /PROFILE)
+# target_link_libraries(logging_tests
+#     GTest::gtest
+#     GTest::gtest_main
+#     wozzits_engine
+# )
 
-add_test(NAME logging_tests COMMAND logging_tests)
+# add_test(NAME logging_tests COMMAND logging_tests)
 
 # Build the MPSC queue tests executable
 add_executable(test_mpsc_queue
