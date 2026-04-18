@@ -47,17 +47,17 @@ public:
                         return;
                     }
                 } else {
-                    prev = next;
+                    tail.compare_exchange_weak(prev, next, std::memory_order_relaxed, std::memory_order_relaxed);
                 }
             } else {
-                prev = next;
+                prev = tail.load(std::memory_order_relaxed);
             }
         }
     }
 
     bool try_pop(T& out) {
-        Node* h = head.load(std::memory_order_relaxed);
-        Node* t = tail.load(std::memory_order_relaxed);
+        Node* h = head.load(std::memory_order_acquire);
+        Node* t = tail.load(std::memory_order_acquire);
         Node* next = h->next.load(std::memory_order_acquire);
         if (h == t) {
             return false;
