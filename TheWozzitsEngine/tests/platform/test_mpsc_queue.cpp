@@ -172,7 +172,7 @@ TEST_F(MPSCQueueTest, ConcurrentPushPop)
 
     for (int i = 0; i < num_producers; ++i)
     {
-        producers.emplace_back([i, items_per_producer]()
+        producers.emplace_back([&]()
         {
             for (int j = 0; j < items_per_producer; ++j)
             {
@@ -184,7 +184,7 @@ TEST_F(MPSCQueueTest, ConcurrentPushPop)
 
     for (int i = 0; i < num_consumers; ++i)
     {
-        consumers.emplace_back([i]()
+        consumers.emplace_back([&]()
         {
             int value;
             while (true)
