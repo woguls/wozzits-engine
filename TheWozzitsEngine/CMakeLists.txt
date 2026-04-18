@@ -25,14 +25,14 @@ endif()
 FetchContent_MakeAvailable(googletest)
 
 # Add the platform subdirectory (includes error module)
-add_subdirectory(platform)
+add_subdirectory(src)
 
 # Enable testing
 enable_testing()
 
 # Build the logging tests executable
 add_executable(logging_tests
-    tests/platform/logging/test_logging.cpp
+    tests/test_logging.cpp
 )
 target_link_options(logging_tests PRIVATE /PROFILE)
 target_link_libraries(logging_tests
@@ -45,7 +45,7 @@ add_test(NAME logging_tests COMMAND logging_tests)
 
 # Build the MPSC queue tests executable
 add_executable(test_mpsc_queue
-    tests/platform/test_mpsc_queue.cpp
+    tests/test_mpsc_queue.cpp
 )
 target_link_libraries(test_mpsc_queue
     GTest::gtest

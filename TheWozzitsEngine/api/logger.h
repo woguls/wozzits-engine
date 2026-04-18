@@ -1,0 +1,48 @@
+#pragma once
+
+#include <memory>
+#include <functional>
+#include <string_view>
+#include "../src/logging-shared.h"
+
+namespace WZ::core
+{
+    class LoggerWorker;
+}
+
+namespace WZ
+{
+
+    // Public-facing logging system.
+    class Logger
+    {
+    public:
+        using Callback = std::function<void(LogLevel, std::string_view)>;
+
+        Logger();
+        ~Logger();
+
+        Logger(const Logger &) = delete;
+        Logger &operator=(const Logger &) = delete;
+
+        // Start/stop lifecycle
+        void start();
+        void stop();
+
+        // Logging API (thread-safe, lock-free push)
+        void log(LogLevel level, std::string_view message);
+
+        // Optional override for output sink
+        void set_callback(LogSinkType cb);
+
+        // Convenience helpers
+        void debug(std::string_view msg);
+        void info(std::string_view msg);
+        void warn(std::string_view msg);
+        void error(std::string_view msg);
+        void critical(std::string_view msg);
+
+    private:
+        std::unique_ptr<core::LoggerWorker> impl;
+    };
+}
