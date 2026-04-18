@@ -8,7 +8,7 @@
 #include <random>
 #include <chrono>
 
-#include "../src/core/MPSC-queue.h"
+#include "../src/core/mpsc_queue.h"
 
 using namespace WZ::core;
 
