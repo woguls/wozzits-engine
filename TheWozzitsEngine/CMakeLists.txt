@@ -38,7 +38,7 @@ target_link_options(logging_tests PRIVATE /PROFILE)
 target_link_libraries(logging_tests
     GTest::gtest
     GTest::gtest_main
-    wozzits_api
+    wozzits_engine
 )
 
 add_test(NAME logging_tests COMMAND logging_tests)
@@ -50,7 +50,7 @@ add_executable(test_mpsc_queue
 target_link_libraries(test_mpsc_queue
     GTest::gtest
     GTest::gtest_main
-    wozzits_api
+    wozzits_engine
 )
 
 add_test(NAME test_mpsc_queue COMMAND test_mpsc_queue)
