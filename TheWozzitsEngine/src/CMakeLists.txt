@@ -2,8 +2,8 @@
 add_library(wozzits_engine
     core/impl/logger_worker.cpp
     core/mpsc_queue.h
-    api/src/logger.cpp
-    api/logger.h
+    ../api/src/logger.cpp
+    ../api/logger.h
 )
 target_include_directories(wozzits_engine PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
