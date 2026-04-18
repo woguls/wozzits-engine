@@ -9,57 +9,126 @@
 #include <chrono>
 
 #include "../src/core/mpsc_queue.h"
+#include "thread_test_harness.h"
 
 using namespace WZ::core;
 
 namespace
 {
-    MPSCQueue<uint64_t> g_queue;
-    std::mutex g_output_mutex;
-    std::vector<int> g_output;
-
-    void clear_output()
-    {
-        std::lock_guard<std::mutex> lock(g_output_mutex);
-        g_output.clear();
-    }
-
-    void drain_queue()
-    {
-        uint64_t value;
-        while (g_queue.try_pop(value))
-        {
-            std::lock_guard<std::mutex> lock(g_output_mutex);
-            g_output.push_back(value);
-        }
-    }
-
-    std::vector<int> get_output()
-    {
-        std::lock_guard<std::mutex> lock(g_output_mutex);
-        return g_output;
-    }
-
     class MPSCQueueTest : public ::testing::Test
     {
     protected:
-        void SetUp() override
+        MPSCQueue<uint64_t> queue;
+
+        std::mutex output_mutex;
+        std::vector<uint64_t> output;
+
+        void push_output(uint64_t v)
         {
-            clear_output();
+            std::lock_guard<std::mutex> lock(output_mutex);
+            output.push_back(v);
         }
 
-        void TearDown() override
+        void drain_queue()
         {
-            drain_queue();
+            uint64_t value;
+            while (queue.try_pop(value))
+            {
+                push_output(value);
+            }
+        }
+
+        std::vector<uint64_t> get_output()
+        {
+            std::lock_guard<std::mutex> lock(output_mutex);
+            return output;
         }
     };
 }
 
+TEST(ThreadTestHarness, NullHarnessTest)
+{
+    ThreadTestHarness harness;
+
+    const int threads = 8;
+    std::atomic<int> counter{0};
+
+    harness.spawn(threads, [&](int)
+                  { counter.fetch_add(1, std::memory_order_relaxed); });
+
+    // Threads should be waiting at the start barrier
+    EXPECT_EQ(counter.load(), 0);
+
+    harness.start();
+    harness.join_all();
+
+    // After start + join, all threads must have run exactly once
+    EXPECT_EQ(counter.load(), threads);
+}
+
+TEST(ThreadTestHarness, BarrierCorrectness)
+{
+    ThreadTestHarness harness;
+
+    const int threads = 16;
+
+    std::atomic<int> entered{0};
+    std::atomic<int> finished{0};
+
+    harness.spawn(threads, [&](int)
+                  {
+        entered.fetch_add(1, std::memory_order_relaxed);
+
+        // simulate work
+        std::this_thread::yield();
+
+        finished.fetch_add(1, std::memory_order_relaxed); });
+
+    // Give threads time to start and block on the barrier
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+    // If the harness is correct, none should have entered yet
+    EXPECT_EQ(entered.load(), 0);
+    EXPECT_EQ(finished.load(), 0);
+
+    harness.start();
+    harness.join_all();
+
+    EXPECT_EQ(entered.load(), threads);
+    EXPECT_EQ(finished.load(), threads);
+}
+
+TEST_F(MPSCQueueTest, MultipleProducers)
+{
+    ThreadTestHarness harness;
+
+    const int producer_count = 8;
+    const int items_per_thread = 1000;
+
+    harness.spawn(producer_count, [&](int id)
+                  {
+        for (int i = 0; i < items_per_thread; ++i)
+        {
+            queue.push(id * items_per_thread + i);
+        } });
+
+    harness.start();
+    harness.join_all();
+
+    drain_queue();
+
+    auto result = get_output();
+
+    EXPECT_EQ(result.size(), producer_count * items_per_thread);
+}
+
 TEST_F(MPSCQueueTest, SingleThreadPushPop)
 {
-    g_queue.push(1);
-    g_queue.push(2);
-    g_queue.push(3);
+    ThreadTestHarness harness;
+
+    queue.push(1);
+    queue.push(2);
+    queue.push(3);
 
     drain_queue();
 
@@ -72,31 +141,29 @@ TEST_F(MPSCQueueTest, SingleThreadPushPop)
 
 TEST_F(MPSCQueueTest, MultiProducerCorrectness)
 {
+    ThreadTestHarness harness;
+
     const int num_threads = 8;
     const int items_per_thread = 1000;
 
-    std::vector<std::thread> threads;
+    harness.spawn(num_threads, [&](int t)
+                  {
+        for (int i = 0; i < items_per_thread; ++i)
+        {
+            queue.push(t * 100000 + i);
+        } });
 
-    for (int t = 0; t < num_threads; ++t)
-    {
-        threads.emplace_back([t, items_per_thread]()
-                             {
-                for (int i = 0; i < items_per_thread; ++i)
-                {
-                    g_queue.push(t * 100000 + i);
-                } });
-    }
-
-    for (auto &th : threads)
-        th.join();
+    harness.start();
+    harness.join_all();
 
     drain_queue();
 
     auto out = get_output();
     EXPECT_EQ(out.size(), num_threads * items_per_thread);
 
-    std::unordered_set<int> seen;
-    for (int v : out)
+    std::unordered_set<uint64_t> seen;
+
+    for (auto v : out)
     {
         EXPECT_TRUE(seen.insert(v).second) << "Duplicate: " << v;
     }
@@ -107,7 +174,7 @@ TEST_F(MPSCQueueTest, FIFOApproximationSingleConsumer)
     const int n = 10000;
 
     for (int i = 0; i < n; ++i)
-        g_queue.push(i);
+        queue.push(i);
 
     drain_queue();
 
@@ -122,30 +189,27 @@ TEST_F(MPSCQueueTest, FIFOApproximationSingleConsumer)
 
 TEST_F(MPSCQueueTest, HighContentionStress)
 {
+    ThreadTestHarness harness;
+
     const int threads = 16;
     const int per_thread = 5000;
 
-    std::vector<std::thread> pool;
+    harness.spawn(threads, [&](int t)
+                  {
+        for (int i = 0; i < per_thread; ++i)
+        {
+            queue.push(t * 100000 + i);
+        } });
 
-    for (int t = 0; t < threads; ++t)
-    {
-        pool.emplace_back([t, per_thread]()
-                          {
-                for (int i = 0; i < per_thread; ++i)
-                {
-                    g_queue.push(t * 100000 + i);
-                } });
-    }
-
-    for (auto &t : pool)
-        t.join();
+    harness.start();
+    harness.join_all();
 
     drain_queue();
 
     auto out = get_output();
     EXPECT_EQ(out.size(), threads * per_thread);
 
-    std::unordered_set<int> seen;
+    std::unordered_set<uint64_t> seen;
     for (auto v : out)
         EXPECT_TRUE(seen.insert(v).second);
 }
@@ -153,7 +217,7 @@ TEST_F(MPSCQueueTest, HighContentionStress)
 TEST_F(MPSCQueueTest, EmptyQueueBehavior)
 {
     uint64_t v = -1;
-    EXPECT_FALSE(g_queue.try_pop(v));
+    EXPECT_FALSE(queue.try_pop(v));
 }
 
 TEST_F(MPSCQueueTest, ConcurrentProducerConsumer)
@@ -175,7 +239,7 @@ TEST_F(MPSCQueueTest, ConcurrentProducerConsumer)
             uint64_t value;
             while (consumed.load() < producers * per_thread)
             {
-                if (g_queue.try_pop(value))
+                if (queue.try_pop(value))
                 {
                     consumed++;
                 }
@@ -190,7 +254,7 @@ TEST_F(MPSCQueueTest, ConcurrentProducerConsumer)
 
                 for (int i = 0; i < per_thread; ++i)
                 {
-                    g_queue.push(t * 100000 + i);
+                    queue.push(t * 100000 + i);
                     produced++;
                 } });
     }
@@ -227,7 +291,7 @@ TEST_F(MPSCQueueTest, Stress)
 
         while (consumed.load(std::memory_order_relaxed) < total)
         {
-            if (g_queue.try_pop(value))
+            if (queue.try_pop(value))
             {
                 results.push_back(value);
                 consumed.fetch_add(1, std::memory_order_relaxed);
@@ -247,7 +311,7 @@ TEST_F(MPSCQueueTest, Stress)
             {
                 int value = t * per_thread + i;
 
-                g_queue.push(value);
+                queue.push(value);
 
                 produced.fetch_add(1, std::memory_order_relaxed);
 
@@ -300,7 +364,7 @@ TEST_F(MPSCQueueTest, ChaosStress)
 
         while (running.load(std::memory_order_acquire))
         {
-            if (g_queue.try_pop(value))
+            if (queue.try_pop(value))
             {
                 consumed.fetch_add(1, std::memory_order_relaxed);
 
@@ -322,7 +386,7 @@ TEST_F(MPSCQueueTest, ChaosStress)
         }
 
         // Drain remaining items
-        while (g_queue.try_pop(value))
+        while (queue.try_pop(value))
         {
             consumed.fetch_add(1, std::memory_order_relaxed);
 
@@ -356,7 +420,7 @@ TEST_F(MPSCQueueTest, ChaosStress)
                 {
                     uint64_t v = ((uint64_t)t << 48) | local++;
 
-                    g_queue.push(v);
+                    queue.push(v);
                     produced.fetch_add(1, std::memory_order_relaxed);
                 }
 
