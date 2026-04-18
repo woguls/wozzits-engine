@@ -34,7 +34,7 @@ enable_testing()
 add_executable(logging_tests
     tests/platform/logging/test_logging.cpp
 )
-
+target_link_options(logging_tests PRIVATE /PROFILE)
 target_link_libraries(logging_tests
     GTest::gtest
     GTest::gtest_main
