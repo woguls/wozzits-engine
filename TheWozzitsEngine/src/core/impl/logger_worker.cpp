@@ -1,4 +1,6 @@
 #include "../logger_worker.h"
+#include "sinks.h"
+#include <mutex>
 #include <cstdio>
 
 namespace WZ::core
@@ -49,13 +51,6 @@ namespace WZ::core
 
         if (worker.joinable())
             worker.join();
-
-        // final drain
-        LogEvent e;
-        while (queue.try_pop(e))
-        {
-            callback(e.level, e.message);
-        }
     }
 
     void LoggerWorker::set_callback(LogSinkType type)
@@ -85,6 +80,18 @@ namespace WZ::core
             };
             break;
 
+        case LogSinkType::Buffer:
+        {
+            buffer_.clear();
+
+            callback = [this](LogLevel level, const char *msg)
+            {
+                std::lock_guard lock(buffer_mutex_);
+                buffer_.push_back(LogEvent{level, msg});
+            };
+            break;
+        }
+
         case LogSinkType::Null:
             callback = [](LogLevel, const char *) {};
             break;
@@ -93,29 +100,58 @@ namespace WZ::core
 
     void LoggerWorker::push(LogEvent event)
     {
+        in_flight.fetch_add(1, std::memory_order_acq_rel);
         queue.push(std::move(event));
     }
 
     void LoggerWorker::run()
     {
-        LogEvent event;
+        LogEvent e;
 
-        while (running.load(std::memory_order_acquire))
+        while (running.load(std::memory_order_acquire) || !queue.empty())
         {
-            if (queue.try_pop(event))
+            if (queue.try_pop(e))
             {
-                callback(event.level, event.message);
+                callback(e.level, e.message.c_str());
+
+                if (in_flight.fetch_sub(1, std::memory_order_acq_rel) == 1)
+                {
+                    std::lock_guard lock(idle_mutex);
+                    idle_cv.notify_all();
+                }
             }
             else
             {
-                std::this_thread::yield(); // simple backoff for now
+                std::this_thread::yield();
             }
         }
 
-        // drain remaining logs
-        while (queue.try_pop(event))
+        // final drain safety
+        while (queue.try_pop(e))
         {
-            callback(event.level, event.message);
+            callback(e.level, e.message.c_str());
+            in_flight.fetch_sub(1, std::memory_order_acq_rel);
         }
+
+        std::lock_guard lock(idle_mutex);
+        idle_cv.notify_all();
     }
+
+    void LoggerWorker::wait_until_idle()
+    {
+        std::unique_lock lock(idle_mutex);
+
+        idle_cv.wait(lock, [&]
+                     { return in_flight.load(std::memory_order_acquire) == 0 && queue.empty(); });
+    }
+
+#ifdef WZ_ENABLE_TESTING
+    std::vector<LogEvent> LoggerWorker::snapshot_memory() const
+    {
+        std::lock_guard<std::mutex> lock(buffer_mutex_);
+        return buffer_;
+    }
+
+#endif
+
 }

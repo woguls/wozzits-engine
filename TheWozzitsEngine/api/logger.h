@@ -25,15 +25,13 @@ namespace WZ
         Logger(const Logger &) = delete;
         Logger &operator=(const Logger &) = delete;
 
-        // Start/stop lifecycle
-        void start();
-        void stop();
-
         // Logging API (thread-safe, lock-free push)
         void log(LogLevel level, std::string_view message);
 
         // Optional override for output sink
         void set_callback(LogSinkType cb);
+
+        void flush();
 
         // Convenience helpers
         void debug(std::string_view msg);
@@ -42,6 +40,11 @@ namespace WZ
         void error(std::string_view msg);
         void critical(std::string_view msg);
 
+#ifdef WZ_ENABLE_TESTING
+        std::vector<LogEvent> snapshot_memory() const;
+        void wait_until_idle();
+
+#endif
     private:
         std::unique_ptr<core::LoggerWorker> impl;
     };

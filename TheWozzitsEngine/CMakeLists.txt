@@ -3,6 +3,8 @@
 cmake_minimum_required(VERSION 3.14)
 project(TheWozzitsEngine VERSION 1.0.0)
 
+option(WZ_ENABLE_TESTING "Enable test hooks" ON)
+
 # Set runtime library for MSVC to use dynamic runtime (MD/MDd)
 if(MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
@@ -35,6 +37,19 @@ enable_testing()
 add_executable(test_mpsc_queue
     tests/test_mpsc_queue.cpp
 )
+
+add_executable(test_logging
+    tests/test_logging.cpp
+)
+
+target_compile_definitions(test_logging PRIVATE WZ_ENABLE_TESTING=1)
+
+target_link_libraries(test_logging
+    GTest::gtest
+    GTest::gtest_main
+    wozzits_engine
+)
+
 target_link_libraries(test_mpsc_queue
     GTest::gtest
     GTest::gtest_main
@@ -42,3 +57,4 @@ target_link_libraries(test_mpsc_queue
 )
 
 add_test(NAME test_mpsc_queue COMMAND test_mpsc_queue)
+add_test(NAME test_logging COMMAND test_logging)

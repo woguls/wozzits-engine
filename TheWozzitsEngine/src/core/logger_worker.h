@@ -3,6 +3,9 @@
 #include <atomic>
 #include <thread>
 #include <functional>
+#include <mutex>
+#include <vector>
+#include <string>
 
 #include "mpsc_queue.h"
 #include "../logging-shared.h"
@@ -28,15 +31,40 @@ namespace WZ::core
 
         void set_callback(LogSinkType t);
 
+        void flush()
+        {
+            LogEvent event;
+
+            while (queue.try_pop(event))
+            {
+                callback(event.level, event.message.c_str());
+            }
+        }
+
+        void wait_until_idle();
+
+#ifdef WZ_ENABLE_TESTING
+        std::vector<LogEvent> snapshot_memory() const;
+
+#endif
+
     private:
         void run();
 
     private:
         MPSCQueue<LogEvent> queue;
 
+        std::vector<LogEvent> buffer_; // for LogSinkType::Buffer
+
+        mutable std::mutex buffer_mutex_;
+
         std::thread worker;
         std::atomic<bool> running{false};
 
         Callback callback;
+
+        std::atomic<int> in_flight{0};
+        std::mutex idle_mutex;
+        std::condition_variable idle_cv;
     };
 }

@@ -1,5 +1,5 @@
 #pragma once
-
+#include <string>
 namespace WZ
 {
     enum class LogLevel
@@ -16,12 +16,13 @@ namespace WZ
         Stderr = 0,
         File,
         Debugger,
+        Buffer,
         Null
     };
 
     struct LogEvent
     {
         LogLevel level;
-        const char *message;
+        std::string message;
     };
 }

@@ -1,10 +1,15 @@
 # Combined core and api library
 add_library(wozzits_engine
     core/impl/logger_worker.cpp
+    core/logger_worker.h
     core/mpsc_queue.h
     ../api/src/logger.cpp
     ../api/logger.h
 )
+target_compile_definitions(wozzits_engine PRIVATE
+    $<$<BOOL:${WZ_ENABLE_TESTING}>:WZ_ENABLE_TESTING=1>
+)
+
 target_include_directories(wozzits_engine PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/core
