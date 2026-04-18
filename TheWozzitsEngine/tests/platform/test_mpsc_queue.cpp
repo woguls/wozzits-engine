@@ -4,6 +4,7 @@
 #include <mutex>
 #include <unordered_set>
 #include <algorithm>
+#include <atomic>
 
 #include "MPSC-queue.h"
 
@@ -153,4 +154,71 @@ TEST_F(MPSCQueueTest, EmptyQueueBehavior)
 {
     int v = -1;
     EXPECT_FALSE(g_queue.try_pop(v));
+}
+
+TEST_F(MPSCQueueTest, ConcurrentPushPop)
+{
+    const int num_producers = 4;
+    const int num_consumers = 4;
+    const int items_per_producer = 1000;
+    const int total_items = num_producers * items_per_producer;
+
+    std::atomic<int> push_count{0};
+    std::atomic<int> pop_count{0};
+    std::atomic<bool> producers_done{false};
+
+    std::vector<std::thread> producers;
+    std::vector<std::thread> consumers;
+
+    for (int i = 0; i < num_producers; ++i)
+    {
+        producers.emplace_back([i, items_per_producer]()
+        {
+            for (int j = 0; j < items_per_producer; ++j)
+            {
+                g_queue.push(i * items_per_producer + j);
+                push_count.fetch_add(1, std::memory_order_relaxed);
+            }
+        });
+    }
+
+    for (int i = 0; i < num_consumers; ++i)
+    {
+        consumers.emplace_back([i]()
+        {
+            int value;
+            while (true)
+            {
+                if (g_queue.try_pop(value))
+                {
+                    std::lock_guard<std::mutex> lock(g_output_mutex);
+                    g_output.push_back(value);
+                    pop_count.fetch_add(1, std::memory_order_relaxed);
+                }
+                else if (producers_done.load(std::memory_order_acquire))
+                {
+                    std::this_thread::yield();
+                    if (g_queue.empty())
+                        break;
+                }
+            }
+        });
+    }
+
+    for (auto& t : producers) t.join();
+    producers_done.store(true, std::memory_order_release);
+
+    for (auto& t : consumers) t.join();
+
+    EXPECT_EQ(push_count.load(), total_items);
+    EXPECT_EQ(pop_count.load(), total_items);
+
+    auto out = get_output();
+    EXPECT_EQ(out.size(), total_items);
+
+    std::unordered_set<int> seen;
+    for (int v : out)
+    {
+        EXPECT_TRUE(seen.insert(v).second) << "Duplicate: " << v;
+    }
 }
