@@ -42,3 +42,15 @@ target_link_libraries(logging_tests
 )
 
 add_test(NAME logging_tests COMMAND logging_tests)
+
+# Build the MPSC queue tests executable
+add_executable(test_mpsc_queue
+    tests/platform/test_mpsc_queue.cpp
+)
+target_link_libraries(test_mpsc_queue
+    GTest::gtest
+    GTest::gtest_main
+    wozzits_platform_logger
+)
+
+add_test(NAME test_mpsc_queue COMMAND test_mpsc_queue)
