@@ -15,7 +15,8 @@ add_library(wozzits_engine
     ../api/window_types.h
     ../api/window.h
     ../api/src/window.cpp
-    platform/win32.h)
+    platform/win32.h
+    platform/src/win32.cpp)
 
 target_compile_definitions(wozzits_engine PRIVATE
     $<$<BOOL:${WZ_ENABLE_TESTING}>:WZ_ENABLE_TESTING=1>

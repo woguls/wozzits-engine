@@ -10,8 +10,6 @@ namespace WZ::window
     bool window_should_close(WindowHandle window);
 
     bool poll_event(WindowHandle window, WindowEvent &out_event);
-    bool poll_key_event(WindowHandle window, KeyEvent &out_event);
-    bool poll_mouse_event(WindowHandle window, MouseEvent &out_event);
 
     void pump_messages();
 }
