@@ -3,6 +3,7 @@ add_library(wozzits_engine
     core/impl/logger_worker.cpp
     core/logger_worker.h
     core/mpsc_queue.h
+    core/spsc_queue.h
     ../api/src/logger.cpp
     ../api/logger.h
     ../api/wozzits_time.h

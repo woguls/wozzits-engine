@@ -1,7 +1,9 @@
 #pragma once
 
+#include <queue>
 namespace WZ::window
 {
+
     struct WindowHandle
     {
         void *native = nullptr; // HWND on Windows
@@ -78,4 +80,36 @@ namespace WZ::window
         int button;
         KeyState state;
     };
+
+    struct WindowEventQueue
+    {
+        std::queue<WZ::window::WindowEvent> q;
+
+        void push(const WZ::window::WindowEvent &e)
+        {
+            q.push(e);
+        }
+
+        bool pop(WZ::window::WindowEvent &out)
+        {
+            if (q.empty())
+                return false;
+
+            out = q.front();
+            q.pop();
+            return true;
+        }
+
+        void clear()
+        {
+            while (!q.empty())
+                q.pop();
+        }
+
+        bool empty() const
+        {
+            return q.empty();
+        }
+    };
+
 }

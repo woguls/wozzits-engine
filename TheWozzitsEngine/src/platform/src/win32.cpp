@@ -32,12 +32,7 @@ namespace WZ::platform::win32
         if (!data)
             return false;
 
-        if (data->event_queue.empty())
-            return false;
-
-        out_event = data->event_queue.front();
-        data->event_queue.pop();
-        return true;
+        return data->event_queue.pop(out_event);
     }
 
     void w32_pump_messages()
@@ -91,6 +86,7 @@ namespace WZ::platform::win32
             delete data;
             return {};
         }
+        data->hwnd = hwnd;
 
         BOOL use_dark = TRUE;
         DwmSetWindowAttribute(
@@ -124,6 +120,8 @@ namespace WZ::platform::win32
         {
             auto *cs = (CREATESTRUCT *)lParam;
             SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)cs->lpCreateParams);
+            auto *data = (Win32WindowData *)cs->lpCreateParams;
+            SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)data);
             return TRUE;
         }
 
@@ -143,6 +141,18 @@ namespace WZ::platform::win32
             DeleteObject(brush);
 
             EndPaint(hwnd, &ps);
+            return 0;
+        }
+
+        case WM_NCDESTROY:
+        {
+            auto *data = GetWindowData(hwnd);
+
+            if (data)
+            {
+                delete data;
+                SetWindowLongPtr(hwnd, GWLP_USERDATA, 0);
+            }
             return 0;
         }
 

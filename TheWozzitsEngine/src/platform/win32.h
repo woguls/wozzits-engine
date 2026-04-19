@@ -13,7 +13,6 @@ namespace WZ::platform::win32
 {
     WZ::window::WindowHandle w32_create_window(const WZ::window::WindowDesc &desc);
     void w32_destroy_window(WZ::window::WindowHandle window);
-    void w32_destroy_window(WZ::window::WindowHandle window);
     bool w32_window_should_close(WZ::window::WindowHandle window);
     bool w32_poll_event(WZ::window::WindowHandle window, WZ::window::WindowEvent &out_event);
     void w32_pump_messages();
@@ -38,10 +37,11 @@ namespace WZ::platform::win32
             OutputDebugStringA(buf);
         }
 
-        HWND hwnd;
+        HWND hwnd = nullptr;
         bool should_close = false;
 
-        std::queue<WZ::window::WindowEvent> event_queue;
+        // IMPORTANT: this is now the ONLY bridge to engine thread
+        WZ::window::WindowEventQueue event_queue;
     };
 
     static Win32WindowData *GetWindowData(HWND hwnd)

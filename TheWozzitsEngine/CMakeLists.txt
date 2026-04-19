@@ -55,8 +55,12 @@ add_executable(test_file
 add_executable(test_window
     tests/test_window.cpp)
 
+add_executable(test_spsc_queue
+    tests/test_spsc_queue.cpp)
+
 target_compile_definitions(test_time PRIVATE WZ_ENABLE_TESTING=1)
 target_compile_definitions(test_mpsc_queue PRIVATE WZ_ENABLE_TESTING=1)
+target_compile_definitions(test_spsc_queue PRIVATE WZ_ENABLE_TESTING=1)
 target_compile_definitions(test_threading PRIVATE WZ_ENABLE_TESTING=1)
 target_compile_definitions(test_logging PRIVATE WZ_ENABLE_TESTING=1)
 target_compile_definitions(test_file PRIVATE WZ_ENABLE_TESTING=1)
@@ -73,6 +77,12 @@ target_link_libraries(test_logging
 )
 
 target_link_libraries(test_mpsc_queue
+    GTest::gtest
+    GTest::gtest_main
+    wozzits_engine
+)
+
+target_link_libraries(test_spsc_queue
     GTest::gtest
     GTest::gtest_main
     wozzits_engine
@@ -102,3 +112,4 @@ add_test(NAME test_time COMMAND test_time)
 add_test(NAME test_threading COMMAND test_threading)
 add_test(NAME test_file COMMAND test_file)
 add_test(NAME test_window COMMAND test_window)
+add_test(NAME test_spsc_queue COMMAND test_spsc_queue)
