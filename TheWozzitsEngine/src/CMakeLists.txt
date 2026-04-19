@@ -11,7 +11,11 @@ add_library(wozzits_engine
     ../api/filesystem.h
     ../api/src/filesystem_os.cpp
     ../api/wozzits_async.h
-    ../api/src/wozzits_async.cpp)
+    ../api/src/wozzits_async.cpp
+    ../api/window_types.h
+    ../api/window.h
+    ../api/src/window.cpp
+    platform/win32.h)
 
 target_compile_definitions(wozzits_engine PRIVATE
     $<$<BOOL:${WZ_ENABLE_TESTING}>:WZ_ENABLE_TESTING=1>
@@ -33,6 +37,12 @@ endif()
 
 if(WIN32)
     target_compile_definitions(wozzits_engine PRIVATE PLATFORM_WINDOWS)
+        target_link_libraries(wozzits_engine
+        PRIVATE
+        user32
+        gdi32
+        dwmapi
+        )
 elseif(UNIX)
     target_compile_definitions(wozzits_engine PRIVATE PLATFORM_POSIX)
 endif()
