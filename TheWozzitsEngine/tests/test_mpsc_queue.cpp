@@ -9,7 +9,7 @@
 #include <chrono>
 
 #include "../src/core/mpsc_queue.h"
-#include "thread_test_harness.h"
+#include "logging_test_harness.h"
 
 using namespace WZ::core;
 

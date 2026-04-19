@@ -23,10 +23,10 @@ public:
     {
         for (size_t i = 0; i < count; ++i)
         {
-            threads.emplace_back([this, fn, i]()
+            threads.emplace_back([this, fn = std::forward<Fn>(fn), i]()
                                  {
-                wait_for_start();
-                fn(i); });
+            wait_for_start();
+            fn(i); });
         }
     }
 
@@ -67,4 +67,26 @@ private:
     std::mutex start_mutex;
     std::condition_variable start_cv;
     bool started = false;
+};
+
+class CollapsingListener : public ::testing::EmptyTestEventListener
+{
+public:
+    void OnTestStart(const ::testing::TestInfo &) override
+    {
+        count++;
+    }
+
+    void OnTestEnd(const ::testing::TestInfo &) override
+    {
+        // suppress per-test output
+    }
+
+    void OnTestProgramEnd(const ::testing::UnitTest &) override
+    {
+        std::cout << "\nTotal test runs: " << count << "\n";
+    }
+
+private:
+    int count = 0;
 };

@@ -5,7 +5,14 @@ add_library(wozzits_engine
     core/mpsc_queue.h
     ../api/src/logger.cpp
     ../api/logger.h
-)
+    ../api/wozzits_time.h
+    ../api/wozzits_threading.h
+    ../api/src/wozzits_threading.cpp
+    ../api/filesystem.h
+    ../api/src/filesystem_os.cpp
+    ../api/wozzits_async.h
+    ../api/src/wozzits_async.cpp)
+
 target_compile_definitions(wozzits_engine PRIVATE
     $<$<BOOL:${WZ_ENABLE_TESTING}>:WZ_ENABLE_TESTING=1>
 )
