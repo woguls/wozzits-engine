@@ -37,7 +37,7 @@ namespace WZ::window
 
     struct WindowEvent
     {
-        WindowEventType type;
+        WindowEventType type{};
 
         union
         {
@@ -81,35 +81,35 @@ namespace WZ::window
         KeyState state;
     };
 
-    struct WindowEventQueue
-    {
-        std::queue<WZ::window::WindowEvent> q;
+    // struct WindowEventQueue
+    // {
+    //     std::queue<WZ::window::WindowEvent> q;
 
-        void push(const WZ::window::WindowEvent &e)
-        {
-            q.push(e);
-        }
+    //     void push(const WZ::window::WindowEvent &e)
+    //     {
+    //         q.push(e);
+    //     }
 
-        bool pop(WZ::window::WindowEvent &out)
-        {
-            if (q.empty())
-                return false;
+    //     bool pop(WZ::window::WindowEvent &out)
+    //     {
+    //         if (q.empty())
+    //             return false;
 
-            out = q.front();
-            q.pop();
-            return true;
-        }
+    //         out = q.front();
+    //         q.pop();
+    //         return true;
+    //     }
 
-        void clear()
-        {
-            while (!q.empty())
-                q.pop();
-        }
+    //     void clear()
+    //     {
+    //         while (!q.empty())
+    //             q.pop();
+    //     }
 
-        bool empty() const
-        {
-            return q.empty();
-        }
-    };
+    //     bool empty() const
+    //     {
+    //         return q.empty();
+    //     }
+    // };
 
 }

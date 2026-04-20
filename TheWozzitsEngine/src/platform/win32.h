@@ -8,22 +8,31 @@
 #include <queue>
 
 #include "../../api/window.h"
-
+#include "../core/spsc_queue.h"
 namespace WZ::platform::win32
 {
+    using WindowEventQueue = WZ::core::SPSCQueue<WZ::window::WindowEvent>;
+    static bool registered = false;
+
     WZ::window::WindowHandle w32_create_window(const WZ::window::WindowDesc &desc);
     void w32_destroy_window(WZ::window::WindowHandle window);
     bool w32_window_should_close(WZ::window::WindowHandle window);
     bool w32_poll_event(WZ::window::WindowHandle window, WZ::window::WindowEvent &out_event);
     void w32_pump_messages();
+    bool drain_events(WZ::window::WindowHandle window,
+                      void (*callback)(const WZ::window::WindowEvent &, void *),
+                      void *user);
 
     struct Win32WindowData
     {
+        static constexpr size_t WINDOW_EVENT_QUEUE_SIZE = 1024; // arbitrary power-of-two capacity for event queue
+
         inline static int s_next_id = 0;
         int id = 0;
 
         Win32WindowData()
-            : id(++s_next_id)
+            : id(++s_next_id),
+              event_queue(WINDOW_EVENT_QUEUE_SIZE)
         {
             char buf[128];
             sprintf_s(buf, "Win32WindowData constructed id=%d\n", id);
@@ -41,7 +50,7 @@ namespace WZ::platform::win32
         bool should_close = false;
 
         // IMPORTANT: this is now the ONLY bridge to engine thread
-        WZ::window::WindowEventQueue event_queue;
+        WindowEventQueue event_queue;
     };
 
     static Win32WindowData *GetWindowData(HWND hwnd)

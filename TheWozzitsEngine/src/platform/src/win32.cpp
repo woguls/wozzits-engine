@@ -1,19 +1,38 @@
 #include "../win32.h"
+namespace
+{
+    using WindowEventQueue = WZ::core::SPSCQueue<WZ::window::WindowEvent>;
 
+    inline void push_window_event(WindowEventQueue &q,
+                                  WZ::window::WindowEvent e)
+    {
+        q.push(std::move(e)); // drop-on-full policy
+    }
+}
 namespace WZ::platform::win32
 {
+
+    bool drain_events(WZ::window::WindowHandle window,
+                      void (*callback)(const WZ::window::WindowEvent &, void *),
+                      void *user)
+    {
+        auto *data = GetWindowData((HWND)window.native);
+        if (!data)
+            return false;
+
+        WZ::window::WindowEvent e;
+
+        while (data->event_queue.try_pop(e))
+        {
+            callback(e, user);
+        }
+
+        return true;
+    }
 
     void w32_destroy_window(WZ::window::WindowHandle window)
     {
         HWND hwnd = (HWND)window.native;
-
-        auto *data = WZ::platform::win32::GetWindowData(hwnd);
-
-        if (data)
-        {
-            delete data;
-            SetWindowLongPtr(hwnd, GWLP_USERDATA, 0);
-        }
 
         DestroyWindow(hwnd);
     }
@@ -28,11 +47,13 @@ namespace WZ::platform::win32
 
     bool w32_poll_event(WZ::window::WindowHandle window, WZ::window::WindowEvent &out_event)
     {
+        if (!window.valid())
+            return false;
         auto *data = GetWindowData((HWND)window.native);
         if (!data)
             return false;
 
-        return data->event_queue.pop(out_event);
+        return data->event_queue.try_pop(out_event);
     }
 
     void w32_pump_messages()
@@ -61,9 +82,14 @@ namespace WZ::platform::win32
         wc.hInstance = hInstance;
         wc.lpszClassName = "WozzitsWindowClass";
 
-        if (!RegisterClass(&wc))
+        if (!registered)
         {
-            OutputDebugStringA("RegisterClass FAILED\n");
+            if (!RegisterClass(&wc))
+            {
+                OutputDebugStringA("RegisterClass FAILED\n");
+            }
+
+            registered = true;
         }
 
         auto *data = new Win32WindowData();
@@ -119,8 +145,8 @@ namespace WZ::platform::win32
         case WM_NCCREATE:
         {
             auto *cs = (CREATESTRUCT *)lParam;
-            SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)cs->lpCreateParams);
             auto *data = (Win32WindowData *)cs->lpCreateParams;
+
             SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)data);
             return TRUE;
         }
@@ -160,8 +186,13 @@ namespace WZ::platform::win32
         {
             auto *data = GetWindowData(hwnd);
             if (data)
+            {
                 data->should_close = true;
+                WZ::window::WindowEvent e{};
+                e.type = WZ::window::WindowEventType::Close;
 
+                push_window_event(data->event_queue, e);
+            }
             return 0;
         }
 
@@ -177,12 +208,14 @@ namespace WZ::platform::win32
             if (!data)
                 return DefWindowProc(hwnd, msg, wParam, lParam);
 
-            WZ::window::WindowEvent e;
+            WZ::window::WindowEvent e{};
             e.type = WZ::window::WindowEventType::Resize;
             e.resize.width = LOWORD(lParam);
             e.resize.height = HIWORD(lParam);
 
-            data->event_queue.push(e);
+            // DROP ON FULL (intentional policy)
+            push_window_event(data->event_queue, e);
+
             return 0;
         }
 
@@ -200,7 +233,7 @@ namespace WZ::platform::win32
                               ? WZ::window::KeyState::Down
                               : WZ::window::KeyState::Up;
 
-            data->event_queue.push(e);
+            push_window_event(data->event_queue, e);
             return 0;
         }
 
@@ -215,7 +248,7 @@ namespace WZ::platform::win32
             e.mouse.x = GET_X_LPARAM(lParam);
             e.mouse.y = GET_Y_LPARAM(lParam);
 
-            data->event_queue.push(e);
+            push_window_event(data->event_queue, e);
             return 0;
         }
         }

@@ -21,20 +21,20 @@ int main()
     {
         pump_messages();
 
-        WindowEvent event;
+        WindowEvent event{};
         while (poll_event(window, event))
         {
-            if (event.type == WindowEventType::Resize)
-            {
-                std::cout << "Resize: "
-                          << event.resize.width << " x "
-                          << event.resize.height << std::endl;
-            }
+            // if (event.type == WindowEventType::Resize)
+            // {
+            //     std::cout << "Resize: "
+            //               << event.resize.width << " x "
+            //               << event.resize.height << std::endl;
+            // }
 
-            if (event.type == WindowEventType::Close)
-            {
-                std::cout << "Close event\n";
-            }
+            // if (event.type == WindowEventType::Close)
+            // {
+            //     std::cout << "Close event\n";
+            // }
         }
     }
     destroy_window(window);
