@@ -1,2 +1,0 @@
-cmake -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang-cl.exe" -S . -B build_tsan
-cmake --build build_tsan --config Debug
