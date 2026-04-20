@@ -8,13 +8,14 @@ namespace WZ::Threading
     struct ThreadImpl
     {
         std::thread thread;
+        bool joined_or_detached = false;
     };
 
     ThreadHandle create(ThreadFn fn, void *data)
     {
-        ThreadImpl *impl = new ThreadImpl;
+        ThreadImpl *impl = new ThreadImpl{};
 
-        impl->thread = std::thread([=]()
+        impl->thread = std::thread([fn, data]()
                                    { fn(data); });
 
         return ThreadHandle{impl};
@@ -24,9 +25,12 @@ namespace WZ::Threading
     {
         auto *impl = static_cast<ThreadImpl *>(handle.internal);
 
-        if (impl && impl->thread.joinable())
+        if (!impl || impl->joined_or_detached)
+            return;
+        if (impl->thread.joinable())
             impl->thread.join();
 
+        impl->joined_or_detached = true;
         delete impl;
         handle.internal = nullptr;
     }
@@ -34,10 +38,11 @@ namespace WZ::Threading
     void detach(ThreadHandle &handle)
     {
         auto *impl = static_cast<ThreadImpl *>(handle.internal);
+        if (!impl || impl->joined_or_detached)
+            return;
 
-        if (impl)
-            impl->thread.detach();
-
+        impl->thread.detach();
+        impl->joined_or_detached = true;
         delete impl;
         handle.internal = nullptr;
     }

@@ -24,7 +24,9 @@ namespace WZ::Time
 #ifdef WZ_ENABLE_TESTING
         static uint64_t tick_resolution_ns()
         {
-            return 1; // logical resolution assumption
+            return std::chrono::steady_clock::period::num *
+                   1'000'000'000ull /
+                   std::chrono::steady_clock::period::den;
         }
 #endif
     };

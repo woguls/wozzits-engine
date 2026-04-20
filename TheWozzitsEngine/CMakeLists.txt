@@ -58,6 +58,10 @@ add_executable(test_window
 add_executable(test_spsc_queue
     tests/test_spsc_queue.cpp)
 
+    add_executable(test_hormuz_0
+    tests/test_hormuz_0.cpp)
+
+
 target_compile_definitions(test_time PRIVATE WZ_ENABLE_TESTING=1)
 target_compile_definitions(test_mpsc_queue PRIVATE WZ_ENABLE_TESTING=1)
 target_compile_definitions(test_spsc_queue PRIVATE WZ_ENABLE_TESTING=1)
@@ -65,6 +69,7 @@ target_compile_definitions(test_threading PRIVATE WZ_ENABLE_TESTING=1)
 target_compile_definitions(test_logging PRIVATE WZ_ENABLE_TESTING=1)
 target_compile_definitions(test_file PRIVATE WZ_ENABLE_TESTING=1)
 target_compile_definitions(test_window PRIVATE WZ_ENABLE_TESTING=1)
+target_compile_definitions(test_hormuz_0 PRIVATE WZ_ENABLE_TESTING=1)
 
 target_link_libraries(test_time
     wozzits_engine
@@ -106,6 +111,12 @@ target_link_libraries(test_window
     wozzits_engine
 )
 
+target_link_libraries(test_hormuz_0
+    GTest::gtest
+    GTest::gtest_main
+    wozzits_engine
+)
+
 add_test(NAME test_mpsc_queue COMMAND test_mpsc_queue)
 add_test(NAME test_logging COMMAND test_logging)
 add_test(NAME test_time COMMAND test_time)
@@ -113,3 +124,4 @@ add_test(NAME test_threading COMMAND test_threading)
 add_test(NAME test_file COMMAND test_file)
 add_test(NAME test_window COMMAND test_window)
 add_test(NAME test_spsc_queue COMMAND test_spsc_queue)
+add_test(NAME test_hormuz_0 COMMAND test_hormuz_0)

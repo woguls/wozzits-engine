@@ -4,6 +4,8 @@ add_library(wozzits_engine
     core/logger_worker.h
     core/mpsc_queue.h
     core/spsc_queue.h
+    ../api/hormuz_0.h
+    ../api/src/hormuz_0.cpp
     ../api/src/logger.cpp
     ../api/logger.h
     ../api/wozzits_time.h
