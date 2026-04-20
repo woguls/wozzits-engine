@@ -2,7 +2,7 @@
 
 #include <queue/mpsc_queue.h>
 
-namespace WZ
+namespace wz::core
 {
     template <typename T>
     class MPSCQueue
@@ -35,6 +35,6 @@ namespace WZ
         }
 
     private:
-        WZ::core::MPSCQueue<T> impl; // <-- this is the definition
+        wz::core::internal::MPSCQueue<T> impl; // <-- this is the definition
     };
 }

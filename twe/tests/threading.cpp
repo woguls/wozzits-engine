@@ -12,7 +12,7 @@
 #include <wozzits/threading.h>
 #include "threading_test_harness.h"
 
-using namespace WZ;
+using namespace wz;
 
 namespace
 {

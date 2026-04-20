@@ -8,7 +8,7 @@ int main()
 {
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
-    using namespace WZ::window;
+    using namespace wz::window;
 
     WindowDesc desc;
     desc.title = "Wozzits Window Test";

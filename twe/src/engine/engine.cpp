@@ -5,7 +5,7 @@
 #include <wozzits/time.h>
 #include <wozzits/logger.h>
 
-namespace WZ::Engine
+namespace wz::engine
 {
     static Context g_ctx;
 
@@ -21,7 +21,7 @@ namespace WZ::Engine
 
     void run(UpdateFn update)
     {
-        using namespace WZ::Time;
+        using namespace wz::time;
 
         Logger logger;
         logger.set_callback(LogSinkType::Stderr);
@@ -33,7 +33,7 @@ namespace WZ::Engine
         while (g_ctx.running)
         {
             // 1. OS events
-            WZ::platform::win32::w32_pump_messages();
+            wz::platform::win32::w32_pump_messages();
 
             // 2. Timing
             uint64_t now = Clock::now();

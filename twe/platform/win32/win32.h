@@ -10,18 +10,18 @@
 #include <wozzits/window.h>
 #include <wozzits/spsc_queue.h>
 
-namespace WZ::platform::win32
+namespace wz::platform::win32
 {
-    using WindowEventQueue = WZ::core::SPSCQueue<WZ::window::WindowEvent>;
+    using WindowEventQueue = wz::core::internal::SPSCQueue<wz::window::WindowEvent>;
     static bool registered = false;
 
-    WZ::window::WindowHandle w32_create_window(const WZ::window::WindowDesc &desc);
-    void w32_destroy_window(WZ::window::WindowHandle window);
-    bool w32_window_should_close(WZ::window::WindowHandle window);
-    bool w32_poll_event(WZ::window::WindowHandle window, WZ::window::WindowEvent &out_event);
+    wz::window::WindowHandle w32_create_window(const wz::window::WindowDesc &desc);
+    void w32_destroy_window(wz::window::WindowHandle window);
+    bool w32_window_should_close(wz::window::WindowHandle window);
+    bool w32_poll_event(wz::window::WindowHandle window, wz::window::WindowEvent &out_event);
     void w32_pump_messages();
-    bool drain_events(WZ::window::WindowHandle window,
-                      void (*callback)(const WZ::window::WindowEvent &, void *),
+    bool drain_events(wz::window::WindowHandle window,
+                      void (*callback)(const wz::window::WindowEvent &, void *),
                       void *user);
 
     struct Win32WindowData

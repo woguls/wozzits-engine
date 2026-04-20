@@ -12,7 +12,7 @@
 
 #include "logging_test_harness.h"
 
-using namespace WZ::core;
+using namespace wz::core;
 
 namespace
 {

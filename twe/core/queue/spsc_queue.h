@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace WZ::core
+namespace wz::core::internal
 {
     static constexpr size_t cache_line_size = 64;
 

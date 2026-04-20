@@ -52,30 +52,30 @@ namespace
         return str;
     }
 
-    static WZ::Error from_win32(DWORD err)
+    static wz::Error from_win32(DWORD err)
     {
         switch (err)
         {
         case ERROR_FILE_NOT_FOUND:
         case ERROR_PATH_NOT_FOUND:
-            return WZ::Error::NotFound;
+            return wz::Error::NotFound;
 
         case ERROR_ACCESS_DENIED:
-            return WZ::Error::PermissionDenied;
+            return wz::Error::PermissionDenied;
 
         case ERROR_ALREADY_EXISTS:
-            return WZ::Error::AlreadyExists;
+            return wz::Error::AlreadyExists;
 
         case ERROR_INVALID_NAME:
-            return WZ::Error::InvalidPath;
+            return wz::Error::InvalidPath;
 
         default:
-            return WZ::Error::IOError;
+            return wz::Error::IOError;
         }
     }
 }
 
-namespace WZ::fs
+namespace wz::fs
 {
 
     static Error last_error()
@@ -86,8 +86,8 @@ namespace WZ::fs
     /// @brief Reads the contents of a file into a buffer.
     /// @param path The path to the file.
     /// @return The result containing the file contents or an error.
-    WZ::Result<WZ::fs::Buffer>
-    WZ::fs::read_file(const Path &path)
+    wz::Result<wz::fs::Buffer>
+    wz::fs::read_file(const Path &path)
     {
         Result<Buffer> result;
 
@@ -141,8 +141,8 @@ namespace WZ::fs
     /// @param data The data to write.
     /// @param overwrite Whether to overwrite the file if it exists.
     /// @return The error code, or Error::None on success.
-    WZ::Error
-    WZ::fs::write_file(const Path &path,
+    wz::Error
+    wz::fs::write_file(const Path &path,
                        const Buffer &data,
                        bool overwrite)
     {
@@ -180,7 +180,7 @@ namespace WZ::fs
     /// @brief  Checks if a file or directory exists at the given path.
     /// @param path
     /// @return
-    bool WZ::fs::exists(const Path &path)
+    bool wz::fs::exists(const Path &path)
     {
         std::wstring wpath = utf8_to_wide(path);
 
@@ -194,7 +194,7 @@ namespace WZ::fs
     /// @param out_error Optional pointer to store the error code.
     /// @return The size of the file, or 0 on error.
     std::uint64_t
-    WZ::fs::file_size(const Path &path, Error *out_error)
+    wz::fs::file_size(const Path &path, Error *out_error)
     {
         std::wstring wpath = utf8_to_wide(path);
 
@@ -233,8 +233,8 @@ namespace WZ::fs
     /// @brief Lists the contents of a directory.
     /// @param path The path to the directory.
     /// @return A result containing the list of entries or an error.
-    WZ::Result<std::vector<WZ::fs::DirEntry>>
-    WZ::fs::list_directory(const Path &path)
+    wz::Result<std::vector<wz::fs::DirEntry>>
+    wz::fs::list_directory(const Path &path)
     {
         Result<std::vector<DirEntry>> result;
 
@@ -283,8 +283,8 @@ namespace WZ::fs
     /// @brief Creates a directory and any necessary parent directories.
     /// @param path The path to the directory to create.
     /// @return An error code indicating the result of the operation.
-    WZ::Error
-    WZ::fs::create_directories(const Path &path)
+    wz::Error
+    wz::fs::create_directories(const Path &path)
     {
         std::wstring wpath = utf8_to_wide(path);
 
@@ -314,8 +314,8 @@ namespace WZ::fs
         return Error::None;
     }
 
-    WZ::Error
-    WZ::fs::write_file_text(const Path &path,
+    wz::Error
+    wz::fs::write_file_text(const Path &path,
                             const std::string &text,
                             bool overwrite)
     {
@@ -329,8 +329,8 @@ namespace WZ::fs
         return write_file(path, buffer, overwrite);
     }
 
-    WZ::Error
-    WZ::fs::remove_file(const Path &path)
+    wz::Error
+    wz::fs::remove_file(const Path &path)
     {
         std::wstring wpath = utf8_to_wide(path);
 
@@ -344,8 +344,8 @@ namespace WZ::fs
         return Error::None;
     }
 
-    WZ::Error
-    WZ::fs::remove_directory(const Path &path, bool recursive)
+    wz::Error
+    wz::fs::remove_directory(const Path &path, bool recursive)
     {
         std::wstring wpath = utf8_to_wide(path);
 
@@ -411,10 +411,10 @@ namespace WZ::fs
         return Error::None;
     }
 
-    void WZ::fs::async_read_file(const Path &path,
+    void wz::fs::async_read_file(const Path &path,
                                  ReadCallback callback)
     {
-        auto *executor = WZ::get_async_executor();
+        auto *executor = wz::get_async_executor();
 
         if (!executor)
         {
@@ -430,12 +430,12 @@ namespace WZ::fs
         callback(std::move(result)); });
     }
 
-    void WZ::fs::async_write_file(const Path &path,
+    void wz::fs::async_write_file(const Path &path,
                                   Buffer data,
                                   WriteCallback callback,
                                   bool overwrite)
     {
-        auto *executor = WZ::get_async_executor();
+        auto *executor = wz::get_async_executor();
 
         if (!executor)
         {
@@ -630,7 +630,7 @@ namespace WZ::fs
         return wide_to_utf8(buffer);
     }
 
-    WZ::Error set_current_directory(const Path &path)
+    wz::Error set_current_directory(const Path &path)
     {
         std::wstring wpath = utf8_to_wide(path);
 

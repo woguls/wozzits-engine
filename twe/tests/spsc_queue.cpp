@@ -11,7 +11,7 @@
 #include <wozzits/spsc_queue.h>
 #include "spsc_test_harness.h"
 
-using namespace WZ::core;
+using namespace wz::core;
 
 namespace
 {

@@ -2,9 +2,9 @@
 
 #include <wozzits/hormuz_0.h>
 
-using namespace WZ::hormuz;
-using WZ::window::WindowEvent;
-using WZ::window::WindowEventType;
+using namespace wz::hormuz;
+using wz::window::WindowEvent;
+using wz::window::WindowEventType;
 
 namespace
 {
@@ -24,7 +24,7 @@ namespace
 
 TEST(Hormuz, SingleListenerReceivesEvent)
 {
-    auto &bus = WZ::hormuz::instance();
+    auto &bus = wz::hormuz::instance();
     bus.reset();
     TestState state;
 
@@ -33,7 +33,7 @@ TEST(Hormuz, SingleListenerReceivesEvent)
     WindowEvent e{};
     e.type = WindowEventType::Key;
     e.key.key = 42;
-    e.key.state = WZ::window::KeyState::Down;
+    e.key.state = wz::window::KeyState::Down;
 
     bus.publish(e);
 
@@ -43,7 +43,7 @@ TEST(Hormuz, SingleListenerReceivesEvent)
 
 TEST(Hormuz, MultipleListenersReceiveEvent)
 {
-    auto &bus = WZ::hormuz::instance();
+    auto &bus = wz::hormuz::instance();
     bus.reset();
     TestState a;
     TestState b;
@@ -63,7 +63,7 @@ TEST(Hormuz, MultipleListenersReceiveEvent)
 
 TEST(Hormuz, EventTypeIsolation)
 {
-    auto &bus = WZ::hormuz::instance();
+    auto &bus = wz::hormuz::instance();
     bus.reset();
     TestState key_state;
     TestState mouse_state;
@@ -83,7 +83,7 @@ TEST(Hormuz, EventTypeIsolation)
 
 TEST(Hormuz, PublishDoesNotCrashWithMaxListeners)
 {
-    auto &bus = WZ::hormuz::instance();
+    auto &bus = wz::hormuz::instance();
     bus.reset();
 
     TestState state;

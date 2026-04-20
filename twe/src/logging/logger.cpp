@@ -1,7 +1,7 @@
 #include <wozzits/logger.h>
 #include "logger_worker.h"
 
-namespace WZ
+namespace wz
 {
     Logger::Logger()
         : impl(std::make_unique<core::LoggerWorker>())
@@ -16,8 +16,8 @@ namespace WZ
     void Logger::log(LogLevel level, std::string_view message)
     {
         impl->push(
-            WZ::LogEvent{
-                static_cast<WZ::LogLevel>(level),
+            wz::LogEvent{
+                static_cast<wz::LogLevel>(level),
                 message.data()});
     }
 

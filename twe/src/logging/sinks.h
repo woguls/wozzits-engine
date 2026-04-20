@@ -3,7 +3,7 @@
 #include <mutex>
 #include <vector>
 
-namespace WZ::core
+namespace wz::core
 {
 
     class BufferSink

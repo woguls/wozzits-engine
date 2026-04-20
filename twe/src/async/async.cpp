@@ -1,6 +1,6 @@
 #include <wozzits/async.h>
 
-namespace WZ
+namespace wz
 {
     static IAsyncExecutor *g_executor = nullptr;
 

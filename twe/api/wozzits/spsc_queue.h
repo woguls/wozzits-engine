@@ -2,7 +2,7 @@
 
 #include <queue/spsc_queue.h>
 
-namespace WZ
+namespace wz::core
 {
     template <typename T>
     class SPSCQueue
@@ -37,6 +37,6 @@ namespace WZ
         }
 
     private:
-        WZ::core::SPSCQueue<T> impl;
+        wz::core::internal::SPSCQueue<T> impl;
     };
 }

@@ -4,11 +4,11 @@
 #include <array>
 #include <wozzits/window_types.h>
 
-namespace WZ::hormuz
+namespace wz::hormuz
 {
 
-    using Event = WZ::window::WindowEvent;
-    using EventType = WZ::window::WindowEventType;
+    using Event = wz::window::WindowEvent;
+    using EventType = wz::window::WindowEventType;
 
     using EventCallback = void (*)(const Event &, void *user);
 

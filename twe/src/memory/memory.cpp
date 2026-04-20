@@ -2,7 +2,7 @@
 
 #include <cstdlib>
 
-namespace WZ::Memory
+namespace wz::memory
 {
     void *alloc(size_t size)
     {

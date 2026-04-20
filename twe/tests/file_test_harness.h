@@ -34,7 +34,7 @@ protected:
 #include <queue>
 #include <functional>
 
-struct FakeExecutor : WZ::IAsyncExecutor
+struct FakeExecutor : wz::IAsyncExecutor
 {
     std::queue<std::function<void()>> jobs;
 

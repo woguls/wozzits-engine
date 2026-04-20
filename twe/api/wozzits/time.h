@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <chrono>
 
-namespace WZ::Time
+namespace wz::time
 {
     using TimePoint = uint64_t; // nanoseconds (monotonic)
     using DurationNs = uint64_t;

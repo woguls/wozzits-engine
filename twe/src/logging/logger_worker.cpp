@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <wozzits/filesystem.h>
 
-namespace WZ::core
+namespace wz::core
 {
     LoggerWorker::LoggerWorker()
     {
@@ -163,7 +163,7 @@ namespace WZ::core
             combined += "\n";
         }
 
-        WZ::fs::write_file_text("wozzits.log", combined, true);
+        wz::fs::write_file_text("wozzits.log", combined, true);
     }
 
     void LoggerWorker::wait_until_idle()

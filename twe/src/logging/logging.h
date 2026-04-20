@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-namespace WZ
+namespace wz
 {
     enum class LogLevel
     {

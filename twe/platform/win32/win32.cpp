@@ -2,26 +2,26 @@
 
 namespace
 {
-    using WindowEventQueue = WZ::core::SPSCQueue<WZ::window::WindowEvent>;
+    using WindowEventQueue = wz::core::internal::SPSCQueue<wz::window::WindowEvent>;
 
     inline void push_window_event(WindowEventQueue &q,
-                                  WZ::window::WindowEvent e)
+                                  wz::window::WindowEvent e)
     {
         q.push(std::move(e)); // drop-on-full policy
     }
 }
-namespace WZ::platform::win32
+namespace wz::platform::win32
 {
 
-    bool drain_events(WZ::window::WindowHandle window,
-                      void (*callback)(const WZ::window::WindowEvent &, void *),
+    bool drain_events(wz::window::WindowHandle window,
+                      void (*callback)(const wz::window::WindowEvent &, void *),
                       void *user)
     {
         auto *data = GetWindowData((HWND)window.native);
         if (!data)
             return false;
 
-        WZ::window::WindowEvent e;
+        wz::window::WindowEvent e;
 
         while (data->event_queue.try_pop(e))
         {
@@ -31,22 +31,22 @@ namespace WZ::platform::win32
         return true;
     }
 
-    void w32_destroy_window(WZ::window::WindowHandle window)
+    void w32_destroy_window(wz::window::WindowHandle window)
     {
         HWND hwnd = (HWND)window.native;
 
         DestroyWindow(hwnd);
     }
 
-    bool w32_window_should_close(WZ::window::WindowHandle handle)
+    bool w32_window_should_close(wz::window::WindowHandle handle)
     {
         HWND hwnd = (HWND)handle.native;
-        auto *data = WZ::platform::win32::GetWindowData(hwnd);
+        auto *data = wz::platform::win32::GetWindowData(hwnd);
 
         return data ? data->should_close : true;
     }
 
-    bool w32_poll_event(WZ::window::WindowHandle window, WZ::window::WindowEvent &out_event)
+    bool w32_poll_event(wz::window::WindowHandle window, wz::window::WindowEvent &out_event)
     {
         if (!window.valid())
             return false;
@@ -74,7 +74,7 @@ namespace WZ::platform::win32
         }
     }
 
-    WZ::window::WindowHandle w32_create_window(const WZ::window::WindowDesc &desc)
+    wz::window::WindowHandle w32_create_window(const wz::window::WindowDesc &desc)
     {
         HINSTANCE hInstance = GetModuleHandle(nullptr);
 
@@ -124,7 +124,7 @@ namespace WZ::platform::win32
 
         ShowWindow(hwnd, SW_SHOW);
 
-        return WZ::window::WindowHandle{hwnd};
+        return wz::window::WindowHandle{hwnd};
     }
 
     LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -189,8 +189,8 @@ namespace WZ::platform::win32
             if (data)
             {
                 data->should_close = true;
-                WZ::window::WindowEvent e{};
-                e.type = WZ::window::WindowEventType::Close;
+                wz::window::WindowEvent e{};
+                e.type = wz::window::WindowEventType::Close;
 
                 push_window_event(data->event_queue, e);
             }
@@ -209,8 +209,8 @@ namespace WZ::platform::win32
             if (!data)
                 return DefWindowProc(hwnd, msg, wParam, lParam);
 
-            WZ::window::WindowEvent e{};
-            e.type = WZ::window::WindowEventType::Resize;
+            wz::window::WindowEvent e{};
+            e.type = wz::window::WindowEventType::Resize;
             e.resize.width = LOWORD(lParam);
             e.resize.height = HIWORD(lParam);
 
@@ -227,12 +227,12 @@ namespace WZ::platform::win32
             if (!data)
                 return DefWindowProc(hwnd, msg, wParam, lParam);
 
-            WZ::window::WindowEvent e;
-            e.type = WZ::window::WindowEventType::Key; // you don't have this yet (see note below)
+            wz::window::WindowEvent e;
+            e.type = wz::window::WindowEventType::Key; // you don't have this yet (see note below)
             e.key.key = (int)wParam;
             e.key.state = (msg == WM_KEYDOWN)
-                              ? WZ::window::KeyState::Down
-                              : WZ::window::KeyState::Up;
+                              ? wz::window::KeyState::Down
+                              : wz::window::KeyState::Up;
 
             push_window_event(data->event_queue, e);
             return 0;
@@ -244,8 +244,8 @@ namespace WZ::platform::win32
             if (!data)
                 return DefWindowProc(hwnd, msg, wParam, lParam);
 
-            WZ::window::WindowEvent e;
-            e.type = WZ::window::WindowEventType::Mouse;
+            wz::window::WindowEvent e;
+            e.type = wz::window::WindowEventType::Mouse;
             e.mouse.x = GET_X_LPARAM(lParam);
             e.mouse.y = GET_Y_LPARAM(lParam);
 

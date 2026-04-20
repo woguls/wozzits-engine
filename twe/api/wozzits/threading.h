@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace WZ::Threading
+namespace wz::threading
 {
     using ThreadFn = void (*)(void *);
 

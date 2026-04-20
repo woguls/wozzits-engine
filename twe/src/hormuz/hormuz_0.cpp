@@ -1,6 +1,6 @@
 #include <wozzits/hormuz_0.h>
 
-namespace WZ::hormuz
+namespace wz::hormuz
 {
 
     static EventBus g_bus;

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace WZ
+namespace wz
 {
     enum class Error
     {

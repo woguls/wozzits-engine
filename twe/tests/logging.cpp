@@ -11,7 +11,7 @@
 #include <wozzits/logger.h>
 #include "logging_test_harness.h"
 
-using namespace WZ;
+using namespace wz;
 
 namespace
 {
@@ -95,7 +95,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_P(LoggerStressTest_B, WorkerStartsAutomatically)
 {
-    WZ::Logger logger;
+    wz::Logger logger;
     logger.set_callback(LogSinkType::Buffer);
     logger.info("hello");
 
@@ -110,7 +110,7 @@ TEST_P(LoggerStressTest_B, WorkerStopsOnDestruction)
     std::vector<LogEvent> snapshot;
 
     {
-        WZ::Logger logger;
+        wz::Logger logger;
         logger.set_callback(LogSinkType::Buffer);
 
         logger.info("msg");
@@ -130,7 +130,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_P(LoggerStressTest_C, MultiThreadLogging)
 {
-    WZ::Logger logger;
+    wz::Logger logger;
 
     constexpr int threads = 8;
     constexpr int per_thread = 1000;
@@ -157,7 +157,7 @@ TEST_P(LoggerStressTest_C, MultiThreadLogging)
 TEST_P(LoggerStressTest_C, DestructorIsSafeUnderLoad)
 {
     {
-        WZ::Logger logger;
+        wz::Logger logger;
         logger.set_callback(LogSinkType::Buffer);
 
         for (int i = 0; i < 10000; ++i)
@@ -169,7 +169,7 @@ TEST_P(LoggerStressTest_C, DestructorIsSafeUnderLoad)
 
 TEST_P(LoggerStressTest_C, SingleThreadOrdering)
 {
-    WZ::Logger logger;
+    wz::Logger logger;
     logger.set_callback(LogSinkType::Buffer);
 
     for (int i = 0; i < 1000; ++i)
@@ -187,7 +187,7 @@ TEST_P(LoggerStressTest_C, SingleThreadOrdering)
 
 TEST_P(LoggerStressTest_C, NullSinkDropsMessages)
 {
-    WZ::Logger logger;
+    wz::Logger logger;
     logger.set_callback(LogSinkType::Null);
 
     for (int i = 0; i < 1000; ++i)
@@ -201,7 +201,7 @@ TEST_P(LoggerStressTest_C, NullSinkDropsMessages)
 
 TEST_P(LoggerStressTest_C, BufferSinkIsIsolated)
 {
-    WZ::Logger logger;
+    wz::Logger logger;
     logger.set_callback(LogSinkType::Buffer);
 
     logger.info("a");
@@ -215,7 +215,7 @@ TEST_P(LoggerStressTest_C, BufferSinkIsIsolated)
 
 TEST_P(LoggerStressTest_C, HighBurstDoesNotCrash)
 {
-    WZ::Logger logger;
+    wz::Logger logger;
     logger.set_callback(LogSinkType::Buffer);
 
     for (int i = 0; i < 200000; ++i)
@@ -228,7 +228,7 @@ TEST_P(LoggerStressTest_C, HighBurstDoesNotCrash)
 
 TEST_P(LoggerStressTest_C, LogLevelPreserved)
 {
-    WZ::Logger logger;
+    wz::Logger logger;
     logger.set_callback(LogSinkType::Buffer);
 
     logger.debug("d");
@@ -249,7 +249,7 @@ TEST_P(LoggerStressTest_C, LogLevelPreserved)
 
 TEST_P(LoggerStressTest_C, InterleavingDoesNotLoseMessages)
 {
-    WZ::Logger logger;
+    wz::Logger logger;
     logger.set_callback(LogSinkType::Buffer);
 
     ThreadTestHarness h;
@@ -270,7 +270,7 @@ TEST_P(LoggerStressTest_C, InterleavingDoesNotLoseMessages)
 
 TEST_P(LoggerStressTest_C, ThroughputSanity)
 {
-    WZ::Logger logger;
+    wz::Logger logger;
     logger.set_callback(LogSinkType::Null);
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -291,7 +291,7 @@ TEST_P(LoggerStressTest_C, RepeatedConstructionDestruction)
 {
     for (int i = 0; i < 1000; ++i)
     {
-        WZ::Logger logger;
+        wz::Logger logger;
         logger.set_callback(LogSinkType::Null);
 
         for (int j = 0; j < 100; ++j)

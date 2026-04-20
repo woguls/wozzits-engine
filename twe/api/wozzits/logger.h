@@ -5,12 +5,12 @@
 #include <string_view>
 #include <logging/logging.h>
 
-namespace WZ::core
+namespace wz::core
 {
     class LoggerWorker;
 }
 
-namespace WZ
+namespace wz
 {
     enum class LogFileSinkMode
     {

@@ -10,7 +10,7 @@
 #include <wozzits/mpsc_queue.h>
 #include "logging.h"
 
-namespace WZ::core
+namespace wz::core
 {
 
     class LoggerWorker

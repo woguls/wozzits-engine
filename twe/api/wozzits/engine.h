@@ -3,7 +3,7 @@
 #include <functional>
 #include <cstdint>
 
-namespace WZ::Engine
+namespace wz::engine
 {
     struct Context
     {

@@ -6,7 +6,7 @@
 #include <functional>
 #include <filesystem/result.h>
 
-namespace WZ::fs
+namespace wz::fs
 {
 
     using Path = std::string;

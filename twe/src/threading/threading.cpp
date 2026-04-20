@@ -2,7 +2,7 @@
 #include <thread>
 #include <chrono>
 
-namespace WZ::Threading
+namespace wz::threading
 {
 
     struct ThreadImpl

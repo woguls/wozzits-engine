@@ -6,7 +6,7 @@ namespace EngineTest
 {
     struct EngineStep
     {
-        WZ::Engine::Context ctx;
+        wz::engine::Context ctx;
     };
 
     struct EngineTestHarness
@@ -16,13 +16,13 @@ namespace EngineTest
 
         bool shutdown_requested = false;
 
-        std::function<void(WZ::Engine::Context &)> per_frame;
-        std::function<void(WZ::Engine::Context &)> on_start;
-        std::function<void(WZ::Engine::Context &)> on_end;
+        std::function<void(wz::engine::Context &)> per_frame;
+        std::function<void(wz::engine::Context &)> on_start;
+        std::function<void(wz::engine::Context &)> on_end;
 
         void run()
         {
-            WZ::Engine::run([&](WZ::Engine::Context &ctx)
+            wz::engine::run([&](wz::engine::Context &ctx)
                             {
                 if (frame_count == 0 && on_start)
                     on_start(ctx);
@@ -33,11 +33,11 @@ namespace EngineTest
                 frame_count++;
 
                 if (frame_count >= max_frames || shutdown_requested)
-                    WZ::Engine::shutdown(); });
+                    wz::engine::shutdown(); });
 
             if (on_end)
             {
-                WZ::Engine::Context dummy;
+                wz::engine::Context dummy;
                 on_end(dummy);
             }
         }
@@ -49,7 +49,7 @@ namespace EngineTest
     };
 }
 
-using namespace WZ;
+using namespace wz;
 
 TEST(EngineSmokeTest, RunsForNFrames)
 {
@@ -59,7 +59,7 @@ TEST(EngineSmokeTest, RunsForNFrames)
 
     bool callback_seen = false;
 
-    h.per_frame = [&](Engine::Context &ctx)
+    h.per_frame = [&](engine::Context &ctx)
     {
         callback_seen = true;
     };

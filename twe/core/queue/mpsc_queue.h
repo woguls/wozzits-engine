@@ -3,7 +3,7 @@
 #include <atomic>
 #include <utility>
 
-namespace WZ::core
+namespace wz::core::internal
 {
     template <typename T>
     class MPSCQueue

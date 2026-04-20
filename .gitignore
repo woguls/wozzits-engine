@@ -6,3 +6,4 @@ build/
 .aider*
 *.pyc
 __pycache__
+docs/doxygen

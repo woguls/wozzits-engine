@@ -2,7 +2,7 @@
 
 #include "window_types.h"
 
-namespace WZ::window
+namespace wz::window
 {
 
     WindowHandle create_window(const WindowDesc &desc);

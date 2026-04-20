@@ -1,7 +1,7 @@
 #pragma once
 
 #include <queue>
-namespace WZ::window
+namespace wz::window
 {
 
     struct WindowHandle
