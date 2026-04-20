@@ -18,6 +18,8 @@ add_library(wozzits_engine
     ../api/window_types.h
     ../api/window.h
     ../api/src/window.cpp
+    ../api/wozzits_memory.h
+    ../api/src/wozzits_memory.cpp
     platform/win32.h
     platform/src/win32.cpp)
 
