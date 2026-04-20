@@ -2,6 +2,7 @@
 #include "sinks.h"
 #include <mutex>
 #include <cstdio>
+#include "../api/filesystem.h"
 
 namespace WZ::core
 {
@@ -47,10 +48,14 @@ namespace WZ::core
 
     void LoggerWorker::stop()
     {
+        accepting.store(false, std::memory_order_release);
         running.store(false, std::memory_order_release);
 
         if (worker.joinable())
             worker.join();
+
+        // now everything is guaranteed drained
+        flush_file();
     }
 
     void LoggerWorker::set_callback(LogSinkType type)
@@ -73,12 +78,14 @@ namespace WZ::core
             break;
 
         case LogSinkType::File:
+        {
             callback = [this](LogLevel level, const char *msg)
             {
-                // if (file)
-                //     std::fprintf(file, "%s\n", msg);
+                std::lock_guard lock(file_mutex);
+                file_buffer.emplace_back(msg);
             };
             break;
+        }
 
         case LogSinkType::Buffer:
         {
@@ -100,6 +107,8 @@ namespace WZ::core
 
     void LoggerWorker::push(LogEvent event)
     {
+        if (!accepting.load())
+            return;
         in_flight.fetch_add(1, std::memory_order_acq_rel);
         queue.push(std::move(event));
     }
@@ -108,7 +117,7 @@ namespace WZ::core
     {
         LogEvent e;
 
-        while (running.load(std::memory_order_acquire) || !queue.empty())
+        while (running.load(std::memory_order_acquire))
         {
             if (queue.try_pop(e))
             {
@@ -137,12 +146,31 @@ namespace WZ::core
         idle_cv.notify_all();
     }
 
+    void LoggerWorker::flush_file()
+    {
+        std::lock_guard lock(file_mutex);
+
+        if (file_buffer.empty())
+            return;
+
+        std::string combined;
+        combined.reserve(file_buffer.size() * 64);
+
+        for (auto &line : file_buffer)
+        {
+            combined += line;
+            combined += "\n";
+        }
+
+        WZ::fs::write_file_text("wozzits.log", combined, true);
+    }
+
     void LoggerWorker::wait_until_idle()
     {
         std::unique_lock lock(idle_mutex);
 
         idle_cv.wait(lock, [&]
-                     { return in_flight.load(std::memory_order_acquire) == 0 && queue.empty(); });
+                     { return in_flight.load(std::memory_order_acquire) == 0; });
     }
 
 #ifdef WZ_ENABLE_TESTING

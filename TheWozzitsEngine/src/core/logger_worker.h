@@ -41,6 +41,8 @@ namespace WZ::core
             }
         }
 
+        void LoggerWorker::flush_file();
+
         void wait_until_idle();
 
 #ifdef WZ_ENABLE_TESTING
@@ -66,5 +68,10 @@ namespace WZ::core
         std::atomic<int> in_flight{0};
         std::mutex idle_mutex;
         std::condition_variable idle_cv;
+
+        std::atomic<bool> accepting = true;
+
+        std::vector<std::string> file_buffer;
+        std::mutex file_mutex;
     };
 }

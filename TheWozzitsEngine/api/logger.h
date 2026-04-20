@@ -12,6 +12,12 @@ namespace WZ::core
 
 namespace WZ
 {
+    enum class LogFileSinkMode
+    {
+        Immediate,   // write per log (slow but safe)
+        Buffered,    // accumulate + periodic flush
+        ShutdownOnly // current behavior (debug only)
+    };
 
     // Public-facing logging system.
     class Logger
