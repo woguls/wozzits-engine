@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <utility>
+#include <utilities/wozassert.h>
 
 namespace wz::core::internal
 {
@@ -43,12 +44,26 @@ namespace wz::core::internal
         MPSCQueue(const MPSCQueue &) = delete;
         MPSCQueue &operator=(const MPSCQueue &) = delete;
 
-        void push(T value)
+        bool try_push(T value)
         {
-            Node *node = new Node(std::move(value));
+            Node *node = new (std::nothrow) Node(std::move(value));
+
+            WZ_CORE_ASSERT(node != nullptr && "Out of memory in MPSCQueue::try_push");
+
+            if (!node)
+                return false;
 
             Node *prev = tail.exchange(node, std::memory_order_acq_rel);
             prev->next.store(node, std::memory_order_release);
+
+            return true;
+        }
+
+        void push(T value)
+        {
+            bool ok = try_push(std::move(value));
+
+            WZ_CORE_ASSERT(ok && "MPSCQueue push failed (OOM)");
         }
 
         bool try_pop(T &out)

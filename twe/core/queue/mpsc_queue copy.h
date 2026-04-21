@@ -3,6 +3,7 @@
 #include <atomic>
 #include <utility>
 #include <mutex>
+#include <thread>
 namespace wz::core::internal
 {
     template <typename T>
@@ -111,7 +112,6 @@ namespace wz::core::internal
 
         void push(T value)
         {
-
             Node *node;
 
             for (;;)
@@ -120,13 +120,30 @@ namespace wz::core::internal
                 if (node)
                     break;
 
-                std::this_thread::yield(); // or spin-wait
+                std::this_thread::yield();
             }
+
             node->data = std::move(value);
             node->next.store(nullptr, std::memory_order_relaxed);
 
             Node *prev = tail.exchange(node, std::memory_order_acq_rel);
             prev->next.store(node, std::memory_order_release);
+        }
+
+        bool try_push(T value)
+        {
+            Node *node = allocate_node();
+
+            if (!node)
+                return false;
+
+            node->data = std::move(value);
+            node->next.store(nullptr, std::memory_order_relaxed);
+
+            Node *prev = tail.exchange(node, std::memory_order_acq_rel);
+            prev->next.store(node, std::memory_order_release);
+
+            return true;
         }
 
         bool try_pop(T &out)

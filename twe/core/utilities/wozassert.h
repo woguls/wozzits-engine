@@ -16,9 +16,9 @@
         }                                                                                        \
     } while (0)
 
-#define WZ_PLATFORM_ASSERT(cond, msg) \
-    do                                \
-    {                                 \
-        if (!(cond))                  \
-            std::abort();             \
+#define WZ_CORE_ASSERT(cond) \
+    do                       \
+    {                        \
+        if (!(cond))         \
+            std::abort();    \
     } while (0)

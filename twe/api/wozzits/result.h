@@ -75,6 +75,21 @@ namespace wz::result
     };
 
     /**
+     * @brief Lightweight result type optimized for hot-path usage (queues, jobs).
+     *
+     * This version avoids heavy semantics and focuses on:
+     * - trivial storage
+     * - minimal branching
+     * - no dynamic allocation
+     */
+    template <typename T>
+    struct LightResult
+    {
+        bool ok = false;
+        T value{};
+    };
+
+    /**
      * @brief Generic result type for operations that return a value or an error.
      *
      * @tparam T Type of the success value.

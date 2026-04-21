@@ -62,6 +62,7 @@ function(wz_add_test name)
 endfunction()
 
 wz_add_test(mpsc_queue)
+wz_add_test(mpsc_ring_buffer)
 wz_add_test(spsc_queue)
 wz_add_test(logging)
 wz_add_test(threading)

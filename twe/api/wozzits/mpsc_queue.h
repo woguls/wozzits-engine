@@ -14,6 +14,11 @@ namespace wz::core
         MPSCQueue(const MPSCQueue &) = delete;
         MPSCQueue &operator=(const MPSCQueue &) = delete;
 
+        bool try_push(T value)
+        {
+            return impl.try_push(std::move(value));
+        }
+
         void push(T value)
         {
             impl.push(std::move(value));
