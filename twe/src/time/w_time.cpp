@@ -1,5 +1,5 @@
-#include <wozzits/time.h>
-#include <platform/win32/time.h> // or declare functions directly
+#include <wozzits/w_time.h>
+#include <win32/w_time.h> // or declare functions directly
 
 namespace wz::time
 {

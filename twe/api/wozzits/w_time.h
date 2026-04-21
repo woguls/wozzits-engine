@@ -1,7 +1,9 @@
 // api/time.h
 #pragma once
 #include <cstdint>
-
+#ifdef WZ_ENABLE_TESTING
+#include <chrono>
+#endif
 namespace wz::time
 {
     using TimePoint = uint64_t;

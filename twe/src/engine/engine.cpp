@@ -2,7 +2,7 @@
 
 #include <win32/win32.h>
 
-#include <wozzits/time.h>
+#include <wozzits/w_time.h>
 #include <wozzits/logger.h>
 
 namespace wz::engine
@@ -26,7 +26,7 @@ namespace wz::engine
         Logger logger;
         logger.set_callback(LogSinkType::Stderr);
 
-        uint64_t last = Clock::now();
+        uint64_t last = wz::time::TimeSource::now();
 
         logger.info("Engine started");
 
@@ -36,7 +36,7 @@ namespace wz::engine
             wz::platform::win32::w32_pump_messages();
 
             // 2. Timing
-            uint64_t now = Clock::now();
+            uint64_t now = wz::time::TimeSource::now();
             uint64_t dt = now - last;
             last = now;
 
