@@ -1,10 +1,10 @@
 #include <cstdint>
 #include <wozzits/w_time.h>
-#include <wozzits/mpsc_queue.h>
+#include <wozzits/mpsc_ring_buffer.h>
 
 namespace wz::event
 {
-    static constexpr size_t MAX_EVENTS = 512; // unused ?
+    static constexpr size_t MAX_EVENTS = 4096; // unused ?
 
     struct Event
     {
@@ -57,6 +57,6 @@ namespace wz::event
         Type type;
     };
 
-    wz::core::MPSCQueue<wz::event::Event> event_queue;
+    wz::core::MPSCRingBuffer<wz::event::Event, MAX_EVENTS> event_queue;
 
 }
