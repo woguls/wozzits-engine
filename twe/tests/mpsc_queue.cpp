@@ -271,39 +271,25 @@ TEST_F(MPSCQueueTest, ConcurrentProducerConsumer)
     EXPECT_EQ(consumed.load(), producers * per_thread);
 }
 
-TEST_F(MPSCQueueTest, Stress)
+TEST_F(MPSCQueueTest, FrameDrivenStress)
 {
     const int producers = 8;
     const int per_thread = 200000;
     const int total = producers * per_thread;
 
     std::atomic<int> produced{0};
-    std::atomic<int> consumed{0};
 
     std::vector<std::thread> threads;
 
-    // consumer thread
-    std::vector<int> results;
-    results.reserve(total);
+    // Frame buffer (simulates EventBuffer in engine)
+    std::vector<int> frame_events;
+    frame_events.reserve(1024);
 
-    std::thread consumer([&]()
-                         {
-        uint64_t value;
+    std::atomic<bool> running{true};
 
-        while (consumed.load(std::memory_order_relaxed) < total)
-        {
-            if (queue.try_pop(value))
-            {
-                results.push_back(value);
-                consumed.fetch_add(1, std::memory_order_relaxed);
-            }
-            else
-            {
-                std::this_thread::yield();
-            }
-        } });
-
-    // producer threads
+    // -------------------------
+    // PRODUCERS
+    // -------------------------
     for (int t = 0; t < producers; ++t)
     {
         threads.emplace_back([&, t]()
@@ -311,32 +297,68 @@ TEST_F(MPSCQueueTest, Stress)
             for (int i = 0; i < per_thread; ++i)
             {
                 int value = t * per_thread + i;
-
                 queue.push(value);
 
                 produced.fetch_add(1, std::memory_order_relaxed);
 
-                // optional: introduce scheduling noise
                 if ((i & 255) == 0)
                     std::this_thread::yield();
             } });
     }
 
+    // -------------------------
+    // ENGINE LOOP (FRAME DRIVEN)
+    // -------------------------
+    std::vector<int> all_events;
+    all_events.reserve(total);
+
+    while (true)
+    {
+        // simulate frame start
+        frame_events.clear();
+
+        // drain queue (THIS is your engine boundary)
+        uint64_t value;
+        while (queue.try_pop(value))
+        {
+            frame_events.push_back(value);
+        }
+
+        // "process frame"
+        for (int v : frame_events)
+        {
+            all_events.push_back(v);
+        }
+
+        // termination condition:
+        // all producers done AND queue drained
+        bool all_produced =
+            produced.load(std::memory_order_acquire) == total;
+
+        bool queue_empty = queue.empty();
+
+        if (all_produced && queue_empty)
+            break;
+
+        std::this_thread::yield();
+    }
+
+    // join producers
     for (auto &th : threads)
         th.join();
 
-    consumer.join();
+    // -------------------------
+    // VALIDATION
+    // -------------------------
+    ASSERT_EQ(all_events.size(), total);
 
-    EXPECT_EQ(produced.load(), total);
-    EXPECT_EQ(consumed.load(), total);
-
-    // verify uniqueness
     std::unordered_set<int> seen;
     seen.reserve(total);
 
-    for (int v : results)
+    for (uint64_t v : all_events)
     {
-        EXPECT_TRUE(seen.insert(v).second) << "Duplicate: " << v;
+        EXPECT_TRUE(seen.insert(v).second)
+            << "Duplicate: " << v;
     }
 
     EXPECT_EQ(seen.size(), total);
