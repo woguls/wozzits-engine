@@ -151,6 +151,18 @@ TEST_F(MPSCQueueTest, MultiProducer)
     const int threads = 8;
     const int per_thread = 1000;
 
+    std::atomic<bool> running{true};
+
+    std::thread consumer([&]
+                         {
+        while (running.load(std::memory_order_relaxed))
+        {
+            drain_queue();
+            std::this_thread::yield();
+        }
+
+        drain_queue(); });
+
     harness.spawn(threads, [&](int tid)
                   {
         for (uint64_t i = 0; i < per_thread; ++i)
@@ -162,7 +174,8 @@ TEST_F(MPSCQueueTest, MultiProducer)
     harness.start();
     harness.join_all();
 
-    drain_queue();
+    running.store(false);
+    consumer.join();
 
     auto out = get_output();
 
