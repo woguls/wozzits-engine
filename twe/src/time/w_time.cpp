@@ -3,7 +3,13 @@
 
 namespace wz::time
 {
-    TimePoint TimeSource::now()
+
+    double TimeSource::now()
+    {
+        return wz::win32::time::now();
+    }
+
+    Tick TimeSource::now_ticks()
     {
         return wz::win32::time::now_ticks();
     }

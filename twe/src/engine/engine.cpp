@@ -26,7 +26,7 @@ namespace wz::engine
         Logger logger;
         logger.set_callback(LogSinkType::Stderr);
 
-        uint64_t last = wz::time::TimeSource::now();
+        uint64_t last = wz::time::TimeSource::now_ticks();
 
         logger.info("Engine started");
 
@@ -36,11 +36,12 @@ namespace wz::engine
             wz::platform::win32::w32_pump_messages();
 
             // 2. Timing
-            uint64_t now = wz::time::TimeSource::now();
-            uint64_t dt = now - last;
-            last = now;
+            uint64_t now_ticks = wz::time::TimeSource::now_ticks();
+            uint64_t dt = now_ticks - last;
+            last = now_ticks;
 
-            g_ctx.delta_time = dt * 1e-9;
+            g_ctx.delta_time =
+                double(dt) / double(wz::time::TimeSource::ticks_per_second());
             g_ctx.frame++;
 
             // 3. User update

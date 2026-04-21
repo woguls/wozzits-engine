@@ -4,10 +4,10 @@
 
 namespace EngineTest
 {
-    struct EngineStep
-    {
-        wz::engine::Context ctx;
-    };
+    struct EngineTestHarness; // forward declaration
+    static EngineTestHarness *g_harness = nullptr;
+
+    static void per_frame_callback(wz::engine::Context &ctx);
 
     struct EngineTestHarness
     {
@@ -22,18 +22,11 @@ namespace EngineTest
 
         void run()
         {
-            wz::engine::run([&](wz::engine::Context &ctx)
-                            {
-                if (frame_count == 0 && on_start)
-                    on_start(ctx);
+            g_harness = this;
 
-                if (per_frame)
-                    per_frame(ctx);
+            wz::engine::run(&per_frame_callback);
 
-                frame_count++;
-
-                if (frame_count >= max_frames || shutdown_requested)
-                    wz::engine::shutdown(); });
+            g_harness = nullptr;
 
             if (on_end)
             {
@@ -47,6 +40,22 @@ namespace EngineTest
             shutdown_requested = true;
         }
     };
+
+    static void per_frame_callback(wz::engine::Context &ctx)
+    {
+        auto &h = *g_harness;
+
+        if (h.frame_count == 0 && h.on_start)
+            h.on_start(ctx);
+
+        if (h.per_frame)
+            h.per_frame(ctx);
+
+        h.frame_count++;
+
+        if (h.frame_count >= h.max_frames || h.shutdown_requested)
+            wz::engine::shutdown();
+    }
 }
 
 using namespace wz;
@@ -66,6 +75,7 @@ TEST(EngineSmokeTest, RunsForNFrames)
 
     h.run();
 
-    EXPECT_EQ(h.frame_count, 10);
+    // ✔ Use engine truth, not harness bookkeeping
+    EXPECT_EQ(wz::engine::context().frame, 10);
     EXPECT_TRUE(callback_seen);
 }
