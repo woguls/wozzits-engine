@@ -19,38 +19,25 @@ namespace wz::engine
         g_ctx.running = false;
     }
 
-    void run(UpdateFn update)
+    void run(UpdateFn update, void *user_data)
     {
         using namespace wz::time;
+        Context &ctx = context();
 
-        Logger logger;
-        logger.set_callback(LogSinkType::Stderr);
+        uint64_t last = TimeSource::now_ticks();
 
-        uint64_t last = wz::time::TimeSource::now_ticks();
-
-        logger.info("Engine started");
-
-        while (g_ctx.running)
+        while (ctx.running)
         {
-            // 1. OS events
-            wz::platform::win32::w32_pump_messages();
+            platform::win32::w32_pump_messages();
 
-            // 2. Timing
-            uint64_t now_ticks = wz::time::TimeSource::now_ticks();
-            uint64_t dt = now_ticks - last;
-            last = now_ticks;
+            uint64_t now = TimeSource::now_ticks();
+            uint64_t dt = now - last;
+            last = now;
 
-            g_ctx.delta_time =
-                double(dt) / double(wz::time::TimeSource::ticks_per_second());
-            g_ctx.frame++;
+            ctx.delta_time = double(dt) / double(TimeSource::ticks_per_second());
+            ctx.frame++;
 
-            // 3. User update
-            if (update)
-                update(g_ctx);
+            update(ctx, user_data);
         }
-
-        logger.info("Engine shutting down");
-
-        logger.flush();
     }
 }

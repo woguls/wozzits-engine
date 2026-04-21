@@ -51,14 +51,14 @@ namespace wz::engine
      * @todo Consider replacing with a more flexible invocation model
      * (e.g. multiple stages: pre_update / update / post_update).
      */
-    using UpdateFn = void (*)(Context &);
+    using UpdateFn = void (*)(Context &ctx, void *user_data);
 
     /**
      * @brief Starts the engine main loop.
      *
      * Runs until shutdown() is called.
      */
-    void run(UpdateFn update);
+    void run(UpdateFn update, void *user_data);
 
     /**
      * @brief Requests engine shutdown.
