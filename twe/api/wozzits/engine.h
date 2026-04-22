@@ -1,72 +1,94 @@
 #pragma once
 
-#include <functional>
 #include <cstdint>
+#include <wozzits/w_time.h>
 
 namespace wz::engine
 {
     /**
-     * @brief Runtime state of the engine for a single frame.
+     * @brief Global engine execution context (lifecycle state only).
      *
-     * The Context object is passed to the user-defined update function
-     * every frame and contains core execution state.
+     * This object represents the long-lived engine state shared across frames.
+     * It does NOT contain per-frame simulation data.
      *
-     * @warning This structure currently mixes engine-internal state
-     * and application-facing data. This is intentional for early design
-     * simplicity but should be revisited.
-     *
-     * @todo Separate engine-internal state from application-facing frame data.
-     * Consider introducing:
-     * - EngineState (internal timing, scheduling, subsystem state)
-     * - FrameData (delta time, frame index, input snapshot, etc.)
-     *
-     * @todo Define a formal "frame contract":
-     * - What is guaranteed to be valid before update()
-     * - What systems run before/after update()
-     * - What data is stable during a frame
+     * The Context is passed into the engine update loop to allow control
+     * of execution (e.g. shutdown requests).
      */
     struct Context
     {
         /**
-         * @brief Controls whether the engine loop continues running.
+         * @brief Controls whether the engine main loop continues running.
          *
-         * Set to false to request shutdown at end of frame.
+         * Setting this to false requests a graceful shutdown at the end of the current frame.
          */
         bool running = true;
-
-        /**
-         * @brief Current frame index since engine start.
-         */
-        uint64_t frame = 0;
-
-        /**
-         * @brief Time elapsed between the current and previous frame (seconds).
-         */
-        double delta_time = 0.0;
     };
 
     /**
-     * @brief Function signature for per-frame update callbacks.
+     * @brief Per-frame execution data.
      *
-     * @todo Consider replacing with a more flexible invocation model
-     * (e.g. multiple stages: pre_update / update / post_update).
+     * This structure represents the temporal and per-frame simulation boundary.
+     * It is recreated (or updated) once per engine tick and passed into the
+     * user update function.
+     *
+     * All frame-synchronous systems (input, simulation, rendering submission)
+     * should derive their behavior from this object.
      */
-    using UpdateFn = void (*)(Context &ctx, void *user_data);
+    struct FrameContext
+    {
+        /**
+         * @brief Temporal frame descriptor (index + time interval).
+         */
+        wz::time::Frame frame;
+
+        /**
+         * @brief Delta time between this frame and the previous frame (seconds).
+         */
+        double delta_time;
+
+        /**
+         * @brief Deterministic frame identity.
+         */
+        uint64_t seed;
+    };
 
     /**
-     * @brief Starts the engine main loop.
+     * @brief Per-frame update function signature.
      *
-     * Runs until shutdown() is called.
+     * The engine calls this function once per frame.
+     *
+     * @param ctx      Engine lifecycle context (global state, shutdown control).
+     * @param fctx     Per-frame simulation context (time + frame data).
+     * @param user_data Opaque pointer provided by the application.
+     *
+     * @warning This is a low-level interface. The engine does not impose
+     * any stage system (pre-update / update / post-update). All sequencing
+     * must be handled externally if needed.
+     */
+    using UpdateFn = void (*)(Context &ctx, FrameContext &fctx, void *user_data);
+
+    /**
+     * @brief Runs the engine main loop.
+     *
+     * Continuously invokes the user-provided update function once per frame
+     * until Context::running is set to false or shutdown() is called.
+     *
+     * @param update     User-defined per-frame update function.
+     * @param user_data  Opaque pointer forwarded to the update function.
      */
     void run(UpdateFn update, void *user_data);
 
     /**
      * @brief Requests engine shutdown.
+     *
+     * Safe to call from any thread depending on implementation guarantees.
      */
     void shutdown();
 
     /**
-     * @brief Returns a reference to the global engine context.
+     * @brief Retrieves the global engine context.
+     *
+     * @return Reference to the engine Context singleton.
      */
     Context &context();
 }

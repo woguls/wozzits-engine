@@ -107,3 +107,36 @@ namespace wz::time
         TimeSource() = delete;
     };
 }
+
+namespace wz::time
+{
+    struct Interval
+    {
+        Tick start;
+        Tick end;
+
+        Tick duration() const
+        {
+            return end - start;
+        }
+    };
+
+    struct Frame
+    {
+        Interval interval;
+
+        uint64_t index; // frame number
+        Tick delta_ticks() const 
+        {
+            return interval.duration();
+        }
+
+        double delta_seconds() const
+        {
+            static const double seconds_per_tick =
+                1.0 / double(TimeSource::ticks_per_second());
+
+            return delta_ticks() * seconds_per_tick;
+        }
+    };
+}

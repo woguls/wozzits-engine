@@ -22,22 +22,36 @@ namespace wz::engine
     void run(UpdateFn update, void *user_data)
     {
         using namespace wz::time;
+
         Context &ctx = context();
+        ctx.running = true;
+
+        const double seconds_per_tick =
+            1.0 / double(TimeSource::ticks_per_second());
 
         uint64_t last = TimeSource::now_ticks();
+        uint64_t frame_index = 0;
 
         while (ctx.running)
         {
             platform::win32::w32_pump_messages();
 
             uint64_t now = TimeSource::now_ticks();
-            uint64_t dt = now - last;
-            last = now;
 
-            ctx.delta_time = double(dt) / double(TimeSource::ticks_per_second());
-            ctx.frame++;
+            uint64_t dt = (now > last) ? (now - last) : 1;
+            uint64_t end = last + dt;
 
-            update(ctx, user_data);
+            FrameContext fctx;
+
+            fctx.frame.index = frame_index++;
+            fctx.frame.interval.start = last;
+            fctx.frame.interval.end = end;
+
+            fctx.delta_time = dt * seconds_per_tick;
+
+            last = end;
+
+            update(ctx, fctx, user_data);
         }
     }
 }
