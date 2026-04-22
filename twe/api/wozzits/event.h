@@ -102,11 +102,16 @@ namespace wz::event
         /// Timestamp of event generation (platform or engine time).
         wz::time::Tick timestamp;
 
+        Category category;
+
         /// Origin of event (platform, engine, or game).
         Source source;
 
         /// Event type identifier.
         Type type;
+
+        uint32_t frame_index;  // NEW (critical)
+        uint32_t frame_offset; // NEW (optional but powerful)
     };
 
     /**
