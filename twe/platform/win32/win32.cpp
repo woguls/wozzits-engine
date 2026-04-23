@@ -10,7 +10,7 @@
 namespace
 {
     // This is safe because SPSCQueue is core infrastructure, not window system logic.
-
+    // This is the queue for "window events" only! 
     using PlatformEventQueue = wz::core::internal::SPSCQueue<PlatformEvent>;
 
     inline void push_window_event(PlatformEventQueue &q,
@@ -104,18 +104,6 @@ namespace wz::platform::win32
 
     LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
-        if (msg == WM_CLOSE)
-            OutputDebugStringA("WM_CLOSE\n");
-
-        if (msg == WM_DESTROY)
-            OutputDebugStringA("WM_DESTROY\n");
-
-        if (msg == WM_SIZE)
-            OutputDebugStringA("WM_SIZE\n");
-
-        if (msg == WM_NCCREATE)
-            OutputDebugStringA("WM_NCCREATE\n");
-
         switch (msg)
         {
         case WM_NCCREATE:
@@ -208,7 +196,7 @@ namespace wz::platform::win32
             e.type = PlatformEvent::Type::Key;
             e.key.key = (int)wParam;
 
-            e.key.pressed =
+            e.key.just_pressed =
                 (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN);
 
             push_window_event(data->event_queue, e);
@@ -223,8 +211,8 @@ namespace wz::platform::win32
 
             PlatformEvent e{};
             e.type = PlatformEvent::Type::MouseMove;
-            e.mouse.x = GET_X_LPARAM(lParam);
-            e.mouse.y = GET_Y_LPARAM(lParam);
+            e.mouse_move.x = GET_X_LPARAM(lParam);
+            e.mouse_move.y = GET_Y_LPARAM(lParam);
 
             push_window_event(data->event_queue, e);
             return 0;

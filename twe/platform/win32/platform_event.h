@@ -4,10 +4,15 @@ struct PlatformEvent
 {
     enum class Type
     {
+        // Window
         Close,
         Resize,
+
+        // Input
         Key,
-        MouseMove
+        MouseMove,
+        MouseButton,
+        MouseWheel
     };
 
     Type type;
@@ -17,7 +22,9 @@ struct PlatformEvent
         struct
         {
             int key;
-            bool pressed;
+            bool is_down;
+            bool just_pressed;
+            bool just_released;
         } key;
 
         struct
@@ -30,6 +37,20 @@ struct PlatformEvent
         {
             int x;
             int y;
-        } mouse;
+            int dx;
+            int dy;
+        } mouse_move;
+
+        struct
+        {
+            int button;   // 0=left, 1=right, etc.
+            bool pressed;
+        } mouse_button;
+
+        struct
+        {
+            int delta; // wheel delta
+        } mouse_wheel;
     };
 };
+

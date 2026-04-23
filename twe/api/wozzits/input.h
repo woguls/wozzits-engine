@@ -32,6 +32,9 @@
 
 namespace wz::input
 {
+    void init_raw_input();   // calls into platform
+    void shutdown_raw_input();
+
     /**
      * @brief Keyboard state reconstructed per frame.
      *
