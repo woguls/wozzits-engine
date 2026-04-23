@@ -1,5 +1,6 @@
 #include <iostream>
-#include <wozzits/window.h>
+#include <wozzits/window2.h>
+#include <win32/platform_event.h>
 
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
@@ -21,20 +22,20 @@ int main()
     {
         pump_messages();
 
-        WindowEvent event{};
+        PlatformEvent event{};
         while (poll_event(window, event))
         {
-            // if (event.type == WindowEventType::Resize)
-            // {
-            //     std::cout << "Resize: "
-            //               << event.resize.width << " x "
-            //               << event.resize.height << std::endl;
-            // }
+            if (event.type == PlatformEvent::Type::Resize)
+            {
+                std::cout << "Resize: "
+                          << event.resize.width << " x "
+                          << event.resize.height << std::endl;
+            }
 
-            // if (event.type == WindowEventType::Close)
-            // {
-            //     std::cout << "Close event\n";
-            // }
+            if (event.type == PlatformEvent::Type::Close)
+            {
+                std::cout << "Close event\n";
+            }
         }
     }
     destroy_window(window);

@@ -1,5 +1,5 @@
 target_sources(wozzits_engine PRIVATE
-    win32.cpp
+    win32copy.cpp
     w_time.cpp
 )
 

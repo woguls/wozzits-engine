@@ -7,9 +7,10 @@ namespace wz::window
 
     WindowHandle create_window(const WindowDesc &desc);
     void destroy_window(WindowHandle window);
-    bool window_should_close(WindowHandle window);
 
-    bool poll_event(WindowHandle window, WindowEvent &out_event);
+    bool should_close(WindowHandle window);
 
-    void pump_messages();
+    void pump_messages(); // OS integration (Win32 message pump)
+
+    bool poll_event(WindowHandle window, WindowEvent &out);
 }

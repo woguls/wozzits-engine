@@ -1,5 +1,5 @@
 #include <wozzits/window.h>
-#include <win32/win32.h>
+#include <win32/win32copy.h>
 
 namespace wz::window
 {
