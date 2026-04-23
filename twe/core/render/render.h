@@ -1,5 +1,5 @@
 #pragma once
-#include <core/math/w_math.h>
+#include <math/w_math.h>
 #include <cstdint>
 
 namespace wz::core::render
@@ -20,16 +20,16 @@ namespace wz::core::render
 namespace wz::core::render
 {
     struct ViewData {
-        Mat4 view;
-        Mat4 proj;
-        Frustum frustum;
+        wz::math::Mat4 view;
+        wz::math::Mat4 proj;
+        wz::math::Frustum frustum;
 
         uint32_t visible_range_start;
         uint32_t visible_range_count;
     };
 
     struct BoundsData {
-        Vec3 center;
+        wz::math::Vec3 center;
         float radius;
     };
 
@@ -40,13 +40,13 @@ namespace wz::core::render
     };
 
     struct LightData {
-        Vec3 position;
+        wz::math::Vec3 position;
         float radius;
 
-        Vec3 direction;
+        wz::math::Vec3 direction;
         float spot_angle;
 
-        Vec3 color;
+        wz::math::Vec3 color;
         float intensity;
 
         uint32_t type;
@@ -56,7 +56,7 @@ namespace wz::core::render
     struct FrameData {
         float time;
         float delta_time;
-        Vec3 ambient;
+        wz::math::Vec3 ambient;
         float exposure;
     };
 
@@ -80,6 +80,33 @@ namespace wz::core::render
         XRay = 1 << 2,
     };
 
+    enum class SortMode : uint32_t
+    {
+        None,
+        FrontToBack,
+        BackToFront,
+        Material,
+        Shader,
+        Custom
+    };
+
+    enum class DispatchType : uint32_t
+    {
+        Direct,     // CPU submits draw calls
+        Indirect,   // GPU-driven draw arguments
+        Compute     // compute shader pass
+    };
+
+    enum class PassType : uint32_t
+    {
+        Opaque,
+        Transparent,
+        Shadow,
+        PostProcess,
+        Compute,
+        UI
+    };
+
     inline EffectBits operator|(EffectBits a, EffectBits b) {
         return (EffectBits)((uint32_t)a | (uint32_t)b);
     }
@@ -91,10 +118,28 @@ namespace wz::core::render
     inline EffectBits operator~(EffectBits a) {
         return (EffectBits)(~(uint32_t)a);
     }
+
+    inline EffectBits& operator|=(EffectBits& a, EffectBits b) {
+        a = (EffectBits)((uint32_t)a | (uint32_t)b);
+        return a;
+    }
 }
 
 namespace wz::core::render
 {
+    struct ResourceBindings
+    {
+        uint32_t frame_uniform;   // camera, time, etc.
+
+        uint32_t texture_start;
+        uint32_t texture_count;
+
+        uint32_t buffer_start;
+        uint32_t buffer_count;
+
+        uint32_t pipeline_state;
+    };
+
     struct ObjectData {
         wz::math::Transform transform;
 
@@ -156,6 +201,6 @@ namespace wz::core::render
         // Execution
         Buffer<PassNode> passes;
 
-        Buffer<FrameData> frame;
+        FrameData frame;
     };
 }

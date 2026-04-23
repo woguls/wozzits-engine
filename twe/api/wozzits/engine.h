@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <wozzits/w_time.h>
 #include <wozzits/input.h>
+#include <render/render.h>
 
 namespace wz::engine
 {
@@ -41,11 +42,7 @@ namespace wz::engine
          * @brief Temporal frame descriptor (index + time interval).
          */
         wz::time::Frame frame;
-
-        /**
-         * @brief Delta time between this frame and the previous frame (seconds).
-         */
-        double delta_time;
+        
 
         /**
          * @brief Deterministic frame identity.
@@ -53,6 +50,8 @@ namespace wz::engine
         uint64_t seed;
 
         wz::input::InputState input;
+
+        wz::core::render::RenderIR* render_ir;
     };
 
     /**

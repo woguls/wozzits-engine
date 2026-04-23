@@ -47,7 +47,7 @@ namespace wz::engine
             fctx.frame.interval.start = last;
             fctx.frame.interval.end = end;
 
-            fctx.delta_time = dt * seconds_per_tick;
+            // fctx.delta_time = dt * seconds_per_tick;
 
             std::vector<wz::event::Event> frame_events;
             frame_events.reserve(4096);

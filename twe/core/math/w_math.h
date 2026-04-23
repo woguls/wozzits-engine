@@ -14,4 +14,14 @@ namespace wz::math
         Quaternion rotation;
         Vec3 scale;
     };
+
+    struct Plane {
+        Vec3 normal;
+        float distance; // signed distance from origin
+    };
+
+    struct Frustum {
+        Plane planes[6]; // left, right, bottom, top, near, far
+    };
+
 }
