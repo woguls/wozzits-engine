@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 #include <wozzits/engine.h>
+#include <wozzits/event.h>
+#include <wozzits/input.h>
 
 namespace EngineTest
 {
@@ -97,4 +99,131 @@ TEST(EngineSmokeTest, RunsForNFrames2)
 
     EXPECT_EQ(h.frame_count, 10);
     EXPECT_TRUE(callback_seen);
+}
+
+
+
+
+using namespace wz;
+
+TEST(InputIntegrationTest, KeyDownBecomesInputState)
+{
+    EngineTest::EngineTestHarness h;
+    h.max_frames = 1;
+
+    wz::input::InputState captured_input{};
+    bool captured = false;
+
+    h.per_frame = [&](engine::Context&, engine::FrameContext&)
+        {
+            // capture input indirectly via engine hook would be ideal,
+            // but for now we assume build_input is deterministic and test via state
+
+            // (we will refine this next step)
+            captured = true;
+        };
+
+    // ----------------------------
+    // Inject raw event BEFORE frame runs
+    // ----------------------------
+    event::Event e{};
+    e.category = event::Event::Category::Input;
+    e.source = event::Event::Source::Platform;
+    e.type = event::Event::Type::KeyPressDown;
+
+    e.key.vkey = 65; // 'A'
+    e.key.scancode = 30;
+    e.key.flags = 0;
+
+    event::event_queue.try_push(e);
+
+    // ----------------------------
+    // Run engine (1 frame)
+    // ----------------------------
+    h.run();
+
+    EXPECT_TRUE(captured);
+}
+
+TEST(InputIntegrationTest, KeyDownIsCaptured)
+{
+    EngineTest::EngineTestHarness h;
+    h.max_frames = 1;
+
+    event::Event e{};
+    e.category = event::Event::Category::Input;
+    e.source = event::Event::Source::Platform;
+    e.type = event::Event::Type::KeyPressDown;
+    e.key.vkey = 65;
+
+    event::event_queue.try_push(e);
+
+    h.per_frame = [&](engine::Context&, engine::FrameContext& fctx)
+        {
+            EXPECT_TRUE(fctx.input.keyboard.down[65]);
+            EXPECT_TRUE(fctx.input.keyboard.pressed[65]);
+        };
+
+    h.run();
+}
+
+#include <gtest/gtest.h>
+#include <wozzits/engine.h>
+#include <wozzits/event.h>
+#include <wozzits/input.h>
+
+using namespace wz;
+
+TEST(InputStressTest, HighVolumeEventFlood)
+{
+    EngineTest::EngineTestHarness h;
+    h.max_frames = 1;
+
+    constexpr int EVENT_COUNT = 10000;
+
+    // ---------------------------------------------------
+    // Inject massive mixed input flood BEFORE frame runs
+    // ---------------------------------------------------
+    for (int i = 0; i < EVENT_COUNT; ++i)
+    {
+        event::Event e{};
+        e.category = event::Event::Category::Input;
+        e.source = event::Event::Source::Platform;
+
+        if (i % 2 == 0)
+        {
+            e.type = event::Event::Type::MouseMove;
+            e.mouse_move.dx = 1;
+            e.mouse_move.dy = 1;
+        }
+        else
+        {
+            e.type = event::Event::Type::KeyPressDown;
+            e.key.vkey = 65; // 'A'
+        }
+
+        event::event_queue.try_push(e);
+    }
+
+    // ---------------------------------------------------
+    // Run engine for exactly one frame
+    // ---------------------------------------------------
+    h.per_frame = [&](engine::Context&, engine::FrameContext& fctx)
+        {
+            // ---------------------------------------------------
+            // Validations after build_input
+            // ---------------------------------------------------
+
+            // Mouse should reflect LAST write (overwrite behavior)
+            EXPECT_EQ(fctx.input.mouse.dx, 1);
+            EXPECT_EQ(fctx.input.mouse.dy, 1);
+
+            // Key A should be down
+            EXPECT_TRUE(fctx.input.keyboard.down[65]);
+            EXPECT_TRUE(fctx.input.keyboard.pressed[65]);
+        };
+
+    h.run();
+
+    EXPECT_EQ(h.frame_count, 1);
 }

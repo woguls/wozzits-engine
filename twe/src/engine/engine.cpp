@@ -58,8 +58,7 @@ namespace wz::engine
                 frame_events.push_back(std::move(e));
             }
 
-            wz::input::InputState input{};
-            wz::input::build_input(input,
+            wz::input::build_input(fctx.input,
                 frame_events.data(),
                 frame_events.size(),
                 fctx.frame);

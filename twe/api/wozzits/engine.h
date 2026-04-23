@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <wozzits/w_time.h>
+#include <wozzits/input.h>
 
 namespace wz::engine
 {
@@ -50,6 +51,8 @@ namespace wz::engine
          * @brief Deterministic frame identity.
          */
         uint64_t seed;
+
+        wz::input::InputState input;
     };
 
     /**
