@@ -4,9 +4,10 @@
 #include <utilities/wozassert.h>
 #pragma once
 
-#include <atomic>
 #include <cstddef>
 #include <utility>
+
+// TODO: snapshot lock ?
 
 namespace wz::core::internal
 {

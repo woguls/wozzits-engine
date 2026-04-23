@@ -80,7 +80,7 @@ namespace wz::time
          *
          * @return Tick frequency of the underlying timer.
          */
-        static uint64_t ticks_per_second();
+        static Tick ticks_per_second();
 
 #ifdef WZ_ENABLE_TESTING
         /**
@@ -92,7 +92,7 @@ namespace wz::time
          *
          * @return Clock resolution in nanoseconds.
          */
-        static uint64_t tick_resolution_ns()
+        static Tick tick_resolution_ns()
         {
             return 1'000'000'000ull / ticks_per_second();
         }

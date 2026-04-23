@@ -1,6 +1,7 @@
 #include <iostream>
 #include <wozzits/window2.h>
 #include <win32/platform_event.h>
+#include <wozzits/input.h>
 
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
@@ -17,6 +18,7 @@ int main()
     desc.height = 600;
 
     WindowHandle window = create_window(desc);
+    wz::input::init_raw_input();
 
     while (!window_should_close(window))
     {
@@ -38,6 +40,7 @@ int main()
             }
         }
     }
+    wz::input::shutdown_raw_input();
     destroy_window(window);
 
     return 0;

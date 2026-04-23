@@ -9,45 +9,51 @@ namespace wz::input
     {
 
         //  phase 1 Reset input state
-        input.keyboard = {};
-        input.mouse = {};
-        input.window = {};
-        input.controller = {};
+        input = {};
+
 
         // phase 2 Iterate events
         for (size_t i = 0; i < count; ++i)
         {
             const auto &e = events[i];
 
-            // phase 3 Reduce evets -> state
+            if (e.category != wz::event::Event::Category::Input)
+                continue;
+
             switch (e.type)
             {
-            case wz::event::Event::Type::KeyPressDown:
-                input.keyboard.down[e.key_code] = true;
-                input.keyboard.pressed[e.key_code] = true;
-                break;
-
-            case wz::event::Event::Type::KeyPressUp:
-                input.keyboard.down[e.key_code] = false;
-                input.keyboard.released[e.key_code] = true;
-                break;
-
             case wz::event::Event::Type::MouseMove:
-                input.mouse.dx += e.mouse_dx;
-                input.mouse.dy += e.mouse_dy;
-                input.mouse.x = e.mouse_x;
-                input.mouse.y = e.mouse_y;
+                // DISCARD ALL BUT LAST (overwrite is correct here)
+                input.mouse.dx = e.mouse_move.dx;
+                input.mouse.dy = e.mouse_move.dy;
                 break;
 
             case wz::event::Event::Type::MouseButton:
-                input.mouse.down[e.button] = e.pressed;
-                input.mouse.pressed[e.button] |= e.pressed;
-                input.mouse.released[e.button] |= !e.pressed;
+                input.mouse.down[e.mouse_button.button] = e.mouse_button.pressed;
+
+                if (e.mouse_button.pressed)
+                    input.mouse.pressed[e.mouse_button.button] = true;
+                else
+                    input.mouse.released[e.mouse_button.button] = true;
+                break;
+
+            case wz::event::Event::Type::KeyPressDown:
+                input.keyboard.down[e.key.vkey] = true;
+                input.keyboard.pressed[e.key.vkey] = true;
+                break;
+
+            case wz::event::Event::Type::KeyPressUp:
+                input.keyboard.down[e.key.vkey] = false;
+                input.keyboard.released[e.key.vkey] = true;
+                break;
+
+            case wz::event::Event::Type::MouseWheel:
+                input.mouse.dx += e.mouse_wheel.delta; // temporary placeholder
                 break;
 
             case wz::event::Event::Type::Resized:
-                input.window.width = e.width;
-                input.window.height = e.height;
+                input.window.width = e.resize.width;
+                input.window.height = e.resize.height;
                 break;
 
             case wz::event::Event::Type::FocusGained:
@@ -58,12 +64,7 @@ namespace wz::input
                 input.window.focused = false;
                 break;
 
-            case wz::event::Event::Type::ControllerAxis:
-                input.controller.axes[e.axis] = e.value;
-                break;
-
-            case wz::event::Event::Type::ControllerButton:
-                input.controller.buttons[e.button] = e.pressed;
+            default:
                 break;
             }
 

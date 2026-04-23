@@ -51,9 +51,7 @@ namespace wz::event
         {
             Input,      ///< User input devices (keyboard, mouse, controller)
             Window,     ///< Window system events (resize, focus, close)
-            Controller, ///< Gamepad / controller events
-            Mouse,      ///< Mouse-specific events
-            VR          ///< VR device events
+            System
         };
 
         /**
@@ -84,6 +82,7 @@ namespace wz::event
             // Mouse
             MouseMove,
             MouseButton,
+            MouseWheel,
 
             // Window
             Resized,
@@ -112,7 +111,41 @@ namespace wz::event
 
         uint32_t frame_index;  // NEW (critical)
         uint32_t frame_offset; // NEW (optional but powerful)
+
+        union
+        {
+            struct
+            {
+                uint16_t vkey;      // from RAWKEYBOARD::VKey
+                uint16_t scancode;  // RAWKEYBOARD::MakeCode (optional but useful)
+                uint16_t flags;     // RAWKEYBOARD::Flags (RI_KEY_BREAK, RI_KEY_E0, etc.)
+            } key;
+
+            struct
+            {
+                int dx, dy;
+                uint16_t flags;
+            } mouse_move;
+
+            struct
+            {
+                uint8_t button;
+                bool pressed;
+            } mouse_button;
+
+            struct
+            {
+                int16_t delta;
+            } mouse_wheel;
+
+            struct
+            {
+                int16_t width;
+                int16_t height;
+            } resize;
+        };
     };
+
 
     /**
      * @brief Global event queue (frame-driven, multi-producer).
@@ -124,5 +157,5 @@ namespace wz::event
      *
      * It is drained once per frame during the input build phase.
      */
-    wz::core::MPSCRingBuffer<wz::event::Event, MAX_EVENTS> event_queue;
+    extern wz::core::MPSCRingBuffer<wz::event::Event, MAX_EVENTS> event_queue;
 }

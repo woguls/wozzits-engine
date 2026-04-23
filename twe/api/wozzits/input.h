@@ -32,7 +32,7 @@
 
 namespace wz::input
 {
-    void init_raw_input();   // calls into platform
+    void init_raw_input();   // calls into os platform
     void shutdown_raw_input();
 
     /**
@@ -146,6 +146,5 @@ namespace wz::input
     void build_input(InputState &input,
                      const wz::event::Event *events,
                      size_t count,
-                     wz::time::Tick frame_start,
-                     wz::time::Tick frame_end);
+                     wz::time::Frame frame_startframe);
 }

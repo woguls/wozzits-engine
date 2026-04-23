@@ -2,11 +2,5 @@
 
 namespace wz::event
 {
-    struct EventQueueSink : EventSink
-    {
-        bool try_push(const Event &e) override
-        {
-            return event_queue.try_push(e);
-        }
-    };
+    wz::core::MPSCRingBuffer<Event, MAX_EVENTS> event_queue;
 }
