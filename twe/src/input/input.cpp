@@ -3,14 +3,23 @@
 namespace wz::input
 {
     void build_input(InputState &input,
+                     const InputState& prev,
                      const wz::event::Event *events,
                      size_t count,
                      wz::time::Frame frame)
     {
 
         //  phase 1 Reset input state
-        input = {};
+        input = prev;
 
+        memset(input.keyboard.pressed, 0, sizeof(input.keyboard.pressed));
+        memset(input.keyboard.released, 0, sizeof(input.keyboard.released));
+
+        memset(input.mouse.pressed, 0, sizeof(input.mouse.pressed));
+        memset(input.mouse.released, 0, sizeof(input.mouse.released));
+
+        input.mouse.dx = 0;
+        input.mouse.dy = 0;
 
         // phase 2 Iterate events
         for (size_t i = 0; i < count; ++i)
@@ -23,7 +32,6 @@ namespace wz::input
             switch (e.type)
             {
             case wz::event::Event::Type::MouseMove:
-                // DISCARD ALL BUT LAST (overwrite is correct here)
                 input.mouse.dx = e.mouse_move.dx;
                 input.mouse.dy = e.mouse_move.dy;
                 break;

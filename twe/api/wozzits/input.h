@@ -144,6 +144,7 @@ namespace wz::input
      * @param frame_end End of frame time window
      */
     void build_input(InputState &input,
+                     const InputState& prev,
                      const wz::event::Event *events,
                      size_t count,
                      wz::time::Frame frame_startframe);

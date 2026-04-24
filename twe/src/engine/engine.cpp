@@ -34,6 +34,9 @@ namespace wz::engine
         Tick last = TimeSource::now_ticks();
         uint64_t frame_index = 0;
 
+        wz::input::InputState input{};
+        wz::input::InputState prev_input{};
+
         while (ctx.running)
         {
             platform::win32::w32_pump_messages();
@@ -58,14 +61,19 @@ namespace wz::engine
                 frame_events.push_back(std::move(e));
             }
 
+
+            prev_input = input;
+            
+
             wz::input::build_input(fctx.input,
+                prev_input,
                 frame_events.data(),
                 frame_events.size(),
                 fctx.frame);
 
+            input = fctx.input;
 
             wz::core::render::submit(fctx.render_ir);
-
 
             last = end;
 

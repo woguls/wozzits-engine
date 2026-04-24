@@ -3,6 +3,23 @@
 #include <wozzits/event.h>
 #include <wozzits/input.h>
 
+namespace
+{
+    struct SimState
+    {
+        float x = 0.0f;
+    };
+
+    void simulate(SimState& sim, const wz::engine::FrameContext& fctx)
+    {
+        if (fctx.input.keyboard.down[65]) // 'A'
+        {
+            sim.x += 1.0f; // move right
+        }
+    }
+}
+
+
 namespace EngineTest
 {
     struct EngineTestHarness
@@ -232,10 +249,12 @@ TEST(InputIntegrationTest, EventsAreFrameIsolated)
     EngineTest::EngineTestHarness h;
     h.max_frames = 2;
 
-    int frame0_seen = 0;
-    int frame1_seen = 0;
+    int frame0_down = 0;
+    int frame1_down = 0;
 
-    // push event BEFORE first frame
+    int frame0_pressed = 0;
+    int frame1_pressed = 0;
+
     wz::event::Event e{};
     e.category = wz::event::Event::Category::Input;
     e.source = wz::event::Event::Source::Platform;
@@ -248,16 +267,47 @@ TEST(InputIntegrationTest, EventsAreFrameIsolated)
         {
             if (fctx.frame.index == 0)
             {
-                frame0_seen += fctx.input.keyboard.down[65];
+                frame0_down += fctx.input.keyboard.down[65];
+                frame0_pressed += fctx.input.keyboard.pressed[65];
             }
             else
             {
-                frame1_seen += fctx.input.keyboard.down[65];
+                frame1_down += fctx.input.keyboard.down[65];
+                frame1_pressed += fctx.input.keyboard.pressed[65];
             }
         };
 
     h.run();
 
-    EXPECT_EQ(frame0_seen, 1);
-    EXPECT_EQ(frame1_seen, 0);
+    EXPECT_EQ(frame0_down, 1);
+    EXPECT_EQ(frame1_down, 1);        // ✔ persists
+
+    EXPECT_EQ(frame0_pressed, 1);
+    EXPECT_EQ(frame1_pressed, 0);     // ✔ frame-isolated
+}
+
+TEST(SimulationTest, MovesWhenKeyHeld)
+{
+    EngineTest::EngineTestHarness h;
+    h.max_frames = 3;
+
+    SimState sim{};
+
+    // Inject key down BEFORE run
+    wz::event::Event e{};
+    e.category = wz::event::Event::Category::Input;
+    e.source = wz::event::Event::Source::Platform;
+    e.type = wz::event::Event::Type::KeyPressDown;
+    e.key.vkey = 65;
+
+    wz::event::event_queue.try_push(e);
+
+    h.per_frame = [&](wz::engine::Context&, wz::engine::FrameContext& fctx)
+        {
+            simulate(sim, fctx);
+        };
+
+    h.run();
+
+    EXPECT_EQ(sim.x, 3.0f);
 }

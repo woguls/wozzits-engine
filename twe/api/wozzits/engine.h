@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdint>
+// #include <cstdint>
 #include <wozzits/w_time.h>
 #include <wozzits/input.h>
 #include <render/render.h>

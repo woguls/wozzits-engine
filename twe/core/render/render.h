@@ -14,7 +14,6 @@ namespace wz::core::render
         T* data;
         uint32_t count;
     };
-
 }
 
 namespace wz::core::render
