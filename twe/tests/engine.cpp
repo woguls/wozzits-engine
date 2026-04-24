@@ -167,10 +167,6 @@ TEST(InputIntegrationTest, KeyDownIsCaptured)
     h.run();
 }
 
-#include <gtest/gtest.h>
-#include <wozzits/engine.h>
-#include <wozzits/event.h>
-#include <wozzits/input.h>
 
 using namespace wz;
 
@@ -210,15 +206,18 @@ TEST(InputStressTest, HighVolumeEventFlood)
     // ---------------------------------------------------
     h.per_frame = [&](engine::Context&, engine::FrameContext& fctx)
         {
-            // ---------------------------------------------------
-            // Validations after build_input
-            // ---------------------------------------------------
+            int down_count = 0;
 
-            // Mouse should reflect LAST write (overwrite behavior)
+            for (int i = 0; i < 256; ++i)
+            {
+                down_count += fctx.input.keyboard.down[i];
+            }
+
+            EXPECT_EQ(down_count, 1); // only 'A' should be down
+
             EXPECT_EQ(fctx.input.mouse.dx, 1);
             EXPECT_EQ(fctx.input.mouse.dy, 1);
 
-            // Key A should be down
             EXPECT_TRUE(fctx.input.keyboard.down[65]);
             EXPECT_TRUE(fctx.input.keyboard.pressed[65]);
         };
@@ -226,4 +225,39 @@ TEST(InputStressTest, HighVolumeEventFlood)
     h.run();
 
     EXPECT_EQ(h.frame_count, 1);
+}
+
+TEST(InputIntegrationTest, EventsAreFrameIsolated)
+{
+    EngineTest::EngineTestHarness h;
+    h.max_frames = 2;
+
+    int frame0_seen = 0;
+    int frame1_seen = 0;
+
+    // push event BEFORE first frame
+    wz::event::Event e{};
+    e.category = wz::event::Event::Category::Input;
+    e.source = wz::event::Event::Source::Platform;
+    e.type = wz::event::Event::Type::KeyPressDown;
+    e.key.vkey = 65;
+
+    wz::event::event_queue.try_push(e);
+
+    h.per_frame = [&](wz::engine::Context&, wz::engine::FrameContext& fctx)
+        {
+            if (fctx.frame.index == 0)
+            {
+                frame0_seen += fctx.input.keyboard.down[65];
+            }
+            else
+            {
+                frame1_seen += fctx.input.keyboard.down[65];
+            }
+        };
+
+    h.run();
+
+    EXPECT_EQ(frame0_seen, 1);
+    EXPECT_EQ(frame1_seen, 0);
 }

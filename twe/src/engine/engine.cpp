@@ -1,10 +1,12 @@
 #include <wozzits/engine.h>
 
-#include <win32/win32.h>
+#include <win32/win32.h> // we should probably add a pump_messages in the wozzits api to call into win32
 
 #include <wozzits/w_time.h>
 #include <wozzits/logger.h>
 #include <wozzits/input.h>
+#include <render/submit.h>
+
 namespace wz::engine
 {
     static Context g_ctx;
@@ -47,8 +49,6 @@ namespace wz::engine
             fctx.frame.interval.start = last;
             fctx.frame.interval.end = end;
 
-            // fctx.delta_time = dt * seconds_per_tick;
-
             std::vector<wz::event::Event> frame_events;
             frame_events.reserve(4096);
 
@@ -62,6 +62,10 @@ namespace wz::engine
                 frame_events.data(),
                 frame_events.size(),
                 fctx.frame);
+
+
+            wz::core::render::submit(fctx.render_ir);
+
 
             last = end;
 

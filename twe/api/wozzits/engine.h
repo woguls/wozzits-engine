@@ -41,17 +41,17 @@ namespace wz::engine
         /**
          * @brief Temporal frame descriptor (index + time interval).
          */
-        wz::time::Frame frame;
+        wz::time::Frame frame{};
         
 
         /**
          * @brief Deterministic frame identity.
          */
-        uint64_t seed;
+        uint64_t seed{};
 
-        wz::input::InputState input;
+        wz::input::InputState input{};
 
-        wz::core::render::RenderIR* render_ir;
+        wz::core::render::RenderIR render_ir{};
     };
 
     /**
