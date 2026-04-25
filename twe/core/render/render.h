@@ -1,6 +1,23 @@
 #pragma once
 #include <math/w_math.h>
 #include <cstdint>
+#include <containers/buffer.h>
+
+/**
+ * @file render.h
+ * @brief Core render intermediate representation (RenderIR) and pipeline contracts.
+ *
+ * This header defines the engine's CPU-side render submission model.
+ *
+ * It does NOT perform rendering. Instead, it describes:
+ * - Scene data (objects, primitives, materials, lights)
+ * - Frame-global state
+ * - Render execution structure (passes, draw lists)
+ * - Sorting and batching mechanisms
+ *
+ * RenderIR is consumed by FrameBuilder, which transforms it into
+ * GPU-ready execution order.
+ */
 
 namespace wz::core::render
 {
@@ -8,16 +25,17 @@ namespace wz::core::render
     using PrimitiveID = uint32_t;
     using MaterialID = uint32_t;
     using BoundsID = uint32_t;
-
-    template<typename T>
-    struct Buffer {
-        T* data;
-        uint32_t count;
-    };
 }
 
 namespace wz::core::render
 {
+
+    /**
+     * @brief Camera view state used for rendering.
+     *
+     * Contains both view/projection transforms and precomputed frustum
+     * used for visibility culling.
+     */
     struct ViewData {
         wz::math::Mat4 view;
         wz::math::Mat4 proj;
@@ -27,17 +45,30 @@ namespace wz::core::render
         uint32_t visible_range_count;
     };
 
+    /**
+     * @brief Bounding sphere used for visibility and culling tests.
+     */
     struct BoundsData {
         wz::math::Vec3 center;
         float radius;
     };
 
+    /**
+     * @brief GPU material descriptor.
+     *
+     * References shader, pipeline state, and texture bindings.
+     */
     struct MaterialData {
         uint32_t shader_id;
-        uint32_t pipeline_state;
+        uint32_t pipeline_state_id;
         uint32_t texture_set;
     };
 
+    /**
+     * @brief Scene light source.
+     *
+     * Supports positional and directional lighting models depending on type.
+     */
     struct LightData {
         wz::math::Vec3 position;
         float radius;
@@ -52,6 +83,11 @@ namespace wz::core::render
         uint32_t flags;
     };
 
+    /**
+     * @brief Per-frame global simulation data.
+     *
+     * Shared across all render passes.
+     */
     struct FrameData {
         float time;
         float delta_time;
@@ -59,6 +95,9 @@ namespace wz::core::render
         float exposure;
     };
 
+    /**
+     * @brief High-level lighting model used by a render pass.
+     */
     enum class LightingMode {
         Unlit,
         Forward,
@@ -66,6 +105,11 @@ namespace wz::core::render
         TiledForward,
     };
 
+    /**
+     * @brief Object-level render behavior flags.
+     *
+     * Controls how primitives participate in the rendering pipeline.
+     */
     enum class RenderFlags : uint32_t {
         CastShadow = 1 << 0,
         ReceiveShadow = 1 << 1,
@@ -73,12 +117,20 @@ namespace wz::core::render
         DoubleSided = 1 << 3,
     };
 
+    /**
+     * @brief Per-object visual effect modifiers.
+     *
+     * Used to trigger additional rendering passes such as outlines or X-ray.
+     */
     enum class EffectBits : uint32_t {
         Outline = 1 << 0,
         Glow = 1 << 1,
         XRay = 1 << 2,
     };
 
+    /**
+     * @brief Determines ordering strategy within a render pass.
+     */
     enum class SortMode : uint32_t
     {
         None,
@@ -89,6 +141,13 @@ namespace wz::core::render
         Custom
     };
 
+    /**
+     * @brief Execution mode of a render pass.
+     *
+     * Direct: CPU submits draw calls.
+     * Indirect: GPU-driven draw arguments.
+     * Compute: compute shader-based execution.
+     */
     enum class DispatchType : uint32_t
     {
         Direct,     // CPU submits draw calls
@@ -96,6 +155,9 @@ namespace wz::core::render
         Compute     // compute shader pass
     };
 
+    /**
+     * @brief High-level classification of a render pass.
+     */
     enum class PassType : uint32_t
     {
         Opaque,
@@ -126,6 +188,11 @@ namespace wz::core::render
 
 namespace wz::core::render
 {
+    /**
+     * @brief GPU resource binding range for a render pass.
+     *
+     * Encapsulates descriptor ranges for textures, buffers, and pipelines.
+     */
     struct ResourceBindings
     {
         uint32_t frame_uniform;   // camera, time, etc.
@@ -139,6 +206,11 @@ namespace wz::core::render
         uint32_t pipeline_state;
     };
 
+    /**
+     * @brief Scene object instance data.
+     *
+     * Represents transform and render behavior modifiers.
+     */
     struct ObjectData {
         wz::math::Transform transform;
 
@@ -146,6 +218,9 @@ namespace wz::core::render
         RenderFlags render_flags;  // pipeline behavior
     };
 
+    /**
+     * @brief Renderable mesh instance referencing an object and material.
+     */
     struct PrimitiveData {
         ObjectID object_id;
         uint32_t mesh_id;
@@ -154,12 +229,77 @@ namespace wz::core::render
         uint32_t submesh_index;
     };
 
+    /**
+     * @brief Defines bit layout of the 64-bit sort key.
+     *
+     * Sort keys are used to minimize GPU state changes by encoding
+     * pipeline, material, and depth into a single sortable integer.
+     *
+     * Layout:
+     * - PIPE     (16 bits)
+     * - MATERIAL (16 bits)
+     * - DEPTH    (24 bits)
+     */
+    struct SortKeyLayout
+    {
+        static constexpr uint64_t PIPE_SHIFT = 40;
+        static constexpr uint64_t MATERIAL_SHIFT = 24;
+        static constexpr uint64_t DEPTH_SHIFT = 0;
+
+        static constexpr uint64_t PIPE_MASK = 0xFFFFull;
+        static constexpr uint64_t MATERIAL_MASK = 0xFFFFull;
+        static constexpr uint64_t DEPTH_MASK = 0xFFFFFFull;
+    };
+
+
+    // NOTE:
+    // sort_key is a GPU state minimization heuristic, NOT a semantic identifier.
+    // It must not encode scene hierarchy or gameplay state.
+    /**
+     * @brief Encodes GPU sorting state into a 64-bit key.
+     *
+     * @param pipe Pipeline or shader state identifier.
+     * @param material Material identifier.
+     * @param depth Quantized depth value (0–2^24).
+     *
+     * @return Packed sort key used for draw ordering.
+     */
+    inline uint64_t make_sort_key(
+        uint32_t pipe,
+        uint32_t material,
+        uint32_t depth
+    )
+    {
+        pipe &= SortKeyLayout::PIPE_MASK;
+        material &= SortKeyLayout::MATERIAL_MASK;
+        depth &= SortKeyLayout::DEPTH_MASK;
+
+        return  (uint64_t(pipe) << SortKeyLayout::PIPE_SHIFT) |
+                (uint64_t(material) << SortKeyLayout::MATERIAL_SHIFT) |
+                (uint64_t(depth) << SortKeyLayout::DEPTH_SHIFT);
+    }
+
+    /**
+     * @brief Renderable draw command reference.
+     *
+     * Contains sorting information and links to primitive data.
+     *
+     * pass_mask determines which render passes this draw participates in.
+     */
     struct DrawRef {
         uint64_t sort_key;
         uint32_t primitive_id;
         uint32_t pass_mask;
     };
 
+    /**
+     * @brief Execution node representing a render pass.
+     *
+     * Each pass defines:
+     * - which draws are included (via pass_mask filtering)
+     * - how they are sorted
+     * - how they are executed (graphics/compute/indirect)
+     */
     struct PassNode {
         PassType type;
 
@@ -179,26 +319,40 @@ namespace wz::core::render
 
 namespace wz::core::render
 {
+    /**
+     * @brief Complete CPU-side render submission intermediate representation.
+     *
+     * RenderIR represents a fully assembled frame before GPU execution.
+     *
+     * It contains:
+     * - Scene data (objects, primitives, bounds)
+     * - Materials and lights
+     * - Draw list (generated by FrameBuilder)
+     * - Render pass graph (execution structure)
+     *
+     * It is mutable during FrameBuilder execution and should be considered
+     * read-only afterward.
+     */
     struct RenderIR {
         // Views
-        Buffer<ViewData> views;
+        wz::core::containers::Buffer<ViewData> views;
 
         // Scene
-        Buffer<ObjectData> objects;
-        Buffer<PrimitiveData> primitives;
-        Buffer<BoundsData> bounds;
+        wz::core::containers::Buffer<ObjectData> objects;
+        wz::core::containers::Buffer<PrimitiveData> primitives;
+        wz::core::containers::Buffer<BoundsData> bounds;
 
         // Materials
-        Buffer<MaterialData> materials;
+        wz::core::containers::Buffer<MaterialData> materials;
 
         // Lighting
-        Buffer<LightData> lights;
+        wz::core::containers::Buffer<LightData> lights;
 
         // Draw indirection
-        Buffer<DrawRef> draws;
+        wz::core::containers::Buffer<DrawRef> draws;
 
         // Execution
-        Buffer<PassNode> passes;
+        wz::core::containers::Buffer<PassNode> passes;
 
         FrameData frame;
     };
