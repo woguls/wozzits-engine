@@ -68,6 +68,7 @@ function(wz_add_test_1 category name)
     set(target "${category}_${name}")
 
     add_executable(${target} twe/tests/${category}/${name}.cpp)
+    set_target_properties(${target} PROPERTIES FOLDER "tests/${category}")
 
     target_compile_definitions(${target} PRIVATE WZ_ENABLE_TESTING=1)
 
@@ -89,9 +90,17 @@ function(wz_add_test_1 category name)
     add_test(NAME ${target} COMMAND ${target})
 endfunction()
 
-wz_add_test(mpsc_queue)
-wz_add_test(mpsc_ring_buffer)
-wz_add_test(spsc_queue)
+
+
+wz_add_test_1(containers mpsc_queue)
+wz_add_test_1(containers mpsc_ring_buffer)
+wz_add_test_1(containers spsc_queue)
+wz_add_test_1(containers buffer)
+
+wz_add_test_1(render frame_builder_tests)
+
+wz_add_test_1(scene transform_node_test)
+
 wz_add_test(logging)
 wz_add_test(threading)
 wz_add_test(time)
@@ -99,7 +108,6 @@ wz_add_test(file_0)
 wz_add_test(test_window)
 wz_add_test(hormuz_0)
 wz_add_test(engine)
-wz_add_test(frame_builder_tests)
 
 wz_add_test_1(math test_vec3)
 wz_add_test_1(math test_mat4)

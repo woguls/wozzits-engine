@@ -87,3 +87,4 @@ TEST(Mat4, RotationZ90)
     EXPECT_NEAR(r.x, 0.0f, 1e-5f);
     EXPECT_NEAR(r.y, 1.0f, 1e-5f);
 }
+

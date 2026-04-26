@@ -1,7 +1,7 @@
 #pragma once
-#include <math/w_math.h>
 #include <cstdint>
 #include <containers/buffer.h>
+#include <wozzits/math/mat4.h>
 
 /**
  * @file render.h
@@ -39,7 +39,6 @@ namespace wz::core::render
     struct ViewData {
         wz::math::Mat4 view;
         wz::math::Mat4 proj;
-        wz::math::Frustum frustum;
 
         uint32_t visible_range_start;
         uint32_t visible_range_count;
@@ -212,7 +211,7 @@ namespace wz::core::render
      * Represents transform and render behavior modifiers.
      */
     struct ObjectData {
-        wz::math::Transform transform;
+        uint32_t scene_node;
 
         EffectBits effect_mask;   // post / extra passes
         RenderFlags render_flags;  // pipeline behavior

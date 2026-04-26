@@ -15,4 +15,6 @@ namespace wz::math
     Vec3 rotate(const Quaternion& q, const Vec3& v);
 
     Vec4 vec4_mul_point(const Mat4& m, const Vec3& v);
+
+    Mat4 to_mat4(const Quaternion& q);
 }

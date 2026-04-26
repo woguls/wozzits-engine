@@ -1,34 +1,40 @@
 #include <render/frame.h>
-#include <math/w_math.h>
+//#include <math/w_math.h>
 #include <algorithm>
+#include <wozzits/math/camera.h>
+#include <wozzits/math/frustum.h>
+#include <wozzits/math/quaternion.h>
+#include <wozzits/math/vec3.h>
 
 namespace
 {
-    inline bool inside_frustum(
-        const wz::math::Frustum& f,
-        const wz::math::Vec3& center,
-        float radius
-    )
+    wz::math::Vec3 transform_point(
+        const wz::math::Transform& t,
+        const wz::math::Vec3& p)
     {
-        for (int i = 0; i < 6; i++)
-        {
-            const auto& p = f.planes[i];
+        // scale (simple)
+        wz::math::Vec3 s = {
+            p.x * t.scale.x,
+            p.y * t.scale.y,
+            p.z * t.scale.z
+        };
 
-            float dist =
-                p.normal.x * center.x +
-                p.normal.y * center.y +
-                p.normal.z * center.z +
-                p.distance;
+        // rotate (placeholder for now)
+        wz::math::Vec3 r = wz::math::rotate(t.rotation, s);
 
-            // sphere is fully outside plane
-            if (dist < -radius)
-                return false;
-        }
+        // translate
+        return {
+            r.x + t.position.x,
+            r.y + t.position.y,
+            r.z + t.position.z
+        };
+    }
 
-        return true;
+    inline bool is_in_front(const wz::math::Vec3& v)
+    {
+        return v.z < 0.0f;
     }
 }
-
 
 namespace wz::render
 {
@@ -45,40 +51,36 @@ namespace wz::render
         auto& out = out_frame.visible_primitives;
         out.reset();
 
+        // ------------------------------------------------------------
+        // BUILD FRUSTUM (ONLY SOURCE OF TRUTH)
+        // ------------------------------------------------------------
+        wz::math::Mat4 vp =
+            wz::math::mul(view.proj, view.view);
+
+        wz::math::Frustum fr =
+            wz::math::frustum_from_view_projection(vp);
+
+        // ------------------------------------------------------------
+        // CULL LOOP
+        // ------------------------------------------------------------
         for (uint32_t i = 0; i < primitives.count; i++)
         {
             const auto& prim = primitives.data[i];
             const auto& b = bounds.data[prim.bounds_id];
             const auto& obj = objects.data[prim.object_id];
 
-            // ------------------------------------------------------------
-            // WORLD SPACE POSITION
-            // ------------------------------------------------------------
-            wz::math::Vec3 world_center = {
-                b.center.x + obj.transform.position.x,
-                b.center.y + obj.transform.position.y,
-                b.center.z + obj.transform.position.z
-            };
+            // WORLD → VIEW SPACE
+            wz::math::Vec3 world_center =
+                wz::math::mul_point(obj.world, b.center);
 
-            // ------------------------------------------------------------
-            // VIEW SPACE TRANSFORM (camera space)
-            // ------------------------------------------------------------
-            wz::math::Vec3 v = to_view_space(view.view, world_center);
-
-            // ------------------------------------------------------------
-            // FRUSTUM TEST (now correctly in view space)
-            // ------------------------------------------------------------
             bool rejected = false;
-            printf("prim %u rejected=%d\n", i, rejected);
+
             for (int j = 0; j < 6; j++)
             {
-                const auto& p = view.frustum.planes[j];
+                const auto& p = fr.planes[j];
 
                 float dist =
-                    p.normal.x * v.x +
-                    p.normal.y * v.y +
-                    p.normal.z * v.z +
-                    p.distance;
+                    wz::math::dot(p.normal, world_center) + p.distance;
 
                 if (dist < -b.radius)
                 {
@@ -99,6 +101,7 @@ namespace wz::render
         RenderFrame& out_frame
     )
     {
+        const auto& view = ir.views.data[0];
         const auto& primitives = ir.primitives;
         const auto& objects = ir.objects;
         const auto& materials = ir.materials;
@@ -120,10 +123,17 @@ namespace wz::render
 
             uint32_t pipe = mat.pipeline_state_id;
 
-            float depth_f =
-                bnd.center.x * bnd.center.x +
-                bnd.center.y * bnd.center.y +
-                bnd.center.z * bnd.center.z;
+            wz::math::Vec3 world_center =
+                wz::math::mul_point(obj.world, bnd.center);
+
+            wz::math::Vec3 view_center =
+                wz::math::mul_point(view.view, world_center);
+
+            float depth_f = -view_center.z;
+
+            if (depth_f < 0.0f)
+                depth_f = 0.0f;
+
             uint32_t depth = (uint32_t)(depth_f * 1000.0f);
 
             uint64_t key = wz::core::render::make_sort_key(
@@ -150,7 +160,7 @@ namespace wz::render
         // Later upgrade path: 
         //    radix sort(64 - bit)
         //    or bucketed sort per pass
-        std::sort(
+        std::stable_sort(
             draws.data,
             draws.data + draws.count,
             [](const wz::core::render::DrawRef& a,
