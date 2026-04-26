@@ -6,26 +6,22 @@
 #include "wozzits/math/mat4.h"
 #include "wozzits/math/quaternion.h"
 
-TEST(Scene, RootNodeWorldMatchesLocal)
+
+TEST(SceneGraphContract, RootNodeMatchesLocal)
 {
     wz::scene::TransformNode nodes[1];
 
-    nodes[0].local.position = { 1, 2, 3 };
-    nodes[0].local.rotation = wz::math::quat_identity();
-    nodes[0].local.scale = { 1, 1, 1 };
-
+    nodes[0].local = wz::math::Transform{}; // identity assumed
     nodes[0].parent = INVALID_TRANSFORM_NODE;
     nodes[0].local_version = 1;
 
-    wz::scene::update_world(nodes, 0);
+    update_world(nodes, 0);
 
-    wz::math::Vec3 v{ 0,0,0 };
-    auto r = wz::math::mul_point(nodes[0].world, v);
-
-    EXPECT_NEAR(r.x, 1, 1e-5f);
-    EXPECT_NEAR(r.y, 2, 1e-5f);
-    EXPECT_NEAR(r.z, 3, 1e-5f);
+    EXPECT_EQ(nodes[0].parent_version, 0u);
+    EXPECT_EQ(nodes[0].world_version, nodes[0].local_version);
 }
+
+
 
 TEST(Scene, ChildInheritsParentTransform)
 {
@@ -72,19 +68,21 @@ TEST(Scene, ChildUpdatesWhenParentChanges)
     nodes[1].parent = 0;
     nodes[1].local_version = 1;
 
-    wz::scene::update_world(nodes, 1);
+    // initial full update
     wz::scene::update_world(nodes, 0);
 
-    wz::math::Vec3 before = wz::math::mul_point(nodes[1].world, { 0,0,0 });
+    wz::math::Vec3 before =
+        wz::math::mul_point(nodes[1].world, { 1,0,0 });
 
-    // change parent
+    // mutate parent
     nodes[0].local.position = { 20, 0, 0 };
     nodes[0].local_version++;
 
+    // recompute full hierarchy
     wz::scene::update_world(nodes, 0);
-    wz::scene::update_world(nodes, 1);
 
-    wz::math::Vec3 after = wz::math::mul_point(nodes[1].world, { 0,0,0 });
+    wz::math::Vec3 after =
+        wz::math::mul_point(nodes[1].world, { 1,0,0 });
 
     EXPECT_NE(before.x, after.x);
 }

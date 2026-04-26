@@ -15,5 +15,4 @@ namespace wz::math
 
     float length(const Vec3& v);
     Vec3 normalize(const Vec3& v);
-    bool near_equal(const Vec3& a, const Vec3& b, float eps = 1e-6f);
 }

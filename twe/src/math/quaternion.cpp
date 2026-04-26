@@ -81,4 +81,12 @@ namespace wz::math
             m.m[3] * v.x + m.m[7] * v.y + m.m[11] * v.z + m.m[15]
         };
     }
+
+    float dot(const Quaternion& a, const Quaternion& b)
+    {
+        return a.x * b.x +
+            a.y * b.y +
+            a.z * b.z +
+            a.w * b.w;
+    }
 }

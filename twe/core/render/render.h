@@ -211,6 +211,7 @@ namespace wz::core::render
      * Represents transform and render behavior modifiers.
      */
     struct ObjectData {
+        wz::math::Mat4 world; // to be removed after refactor and new object system
         uint32_t scene_node;
 
         EffectBits effect_mask;   // post / extra passes

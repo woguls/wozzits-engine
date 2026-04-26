@@ -3,5 +3,5 @@ target_sources(wozzits_engine PRIVATE
     mat4.cpp
     quaternion.cpp
     frustum.cpp
-    
+    compare.cpp
 )

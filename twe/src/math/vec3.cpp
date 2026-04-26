@@ -55,9 +55,4 @@ namespace wz::math
 
         return v / len;
     }
-
-    bool near_equal(const Vec3& a, const Vec3& b, float eps)
-    {
-        return length(a - b) < eps;
-    }
 }

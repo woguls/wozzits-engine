@@ -23,15 +23,12 @@ namespace wz::scene
         return false;
     }
 
-    void update_world(
-        TransformNode* nodes,
-        uint32_t id
-    )
+    void update_world(TransformNode* nodes, uint32_t id)
     {
         TransformNode& node = nodes[id];
 
         TransformNode* parent =
-            (node.parent != INVALID_TRANSFORM_NODE)
+            node.parent != INVALID_TRANSFORM_NODE
             ? &nodes[node.parent]
             : nullptr;
 
@@ -41,24 +38,14 @@ namespace wz::scene
         if (!needs_update(node, parent))
             return;
 
+        const auto local = compute_local(node);
+
         if (parent)
-        {
-            node.world =
-                wz::math::mul(
-                    parent->world,
-                    wz::math::transform(node.local)
-                );
-
-            node.parent_version = parent->world_version;
-        }
+            node.world = wz::math::mul(parent->world, local);
         else
-        {
-            node.world =
-                wz::math::transform(node.local);
+            node.world = local;
 
-            node.parent_version = 0;
-        }
-
+        node.parent_version = parent ? parent->world_version : 0;
         node.world_version = node.local_version;
     }
 

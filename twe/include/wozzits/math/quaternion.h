@@ -17,4 +17,6 @@ namespace wz::math
     Vec4 vec4_mul_point(const Mat4& m, const Vec3& v);
 
     Mat4 to_mat4(const Quaternion& q);
+
+    float dot(const Quaternion& a, const Quaternion& b);
 }

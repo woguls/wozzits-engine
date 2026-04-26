@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <wozzits/math/vec3.h>
+#include <wozzits/math/compare.h>
 
 using namespace wz::math;
 
