@@ -1,7 +1,8 @@
 #include <wozzits/scene/bake.h>
-
+#include <algo/next.h>
 #include <wozzits/math/mat4.h>
 #include <render/render.h>
+#include <wozzits/scene/scene.h>
 #include <iostream>
 
 namespace wz::scene::bake
@@ -33,5 +34,35 @@ namespace wz::scene::bake
                 RenderFlags{}
                 });
         }
+    }
+
+    using namespace wz::core::containers;
+    using namespace wz::scene;
+
+    void bake_transforms_v2(
+        const Buffer<TransformNode>& nodes,
+        const Buffer<Object>& objects,
+        Buffer<wz::core::render::ObjectData>& out)
+    {
+        using namespace wz::core::render;
+
+        auto* node_data = nodes.data();
+
+        wz::core::algo::next::transform(
+            objects,
+            out,
+            [&](const Object& obj)
+            {
+                const TransformNode& node = node_data[obj.node];
+
+                ObjectData r{};
+                r.world = node.world;
+                r.scene_node = obj.node;
+                r.effect_mask = (EffectBits)0;
+                r.render_flags = (RenderFlags)0;
+
+                return r;
+            }
+        );
     }
 }

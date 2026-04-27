@@ -3,6 +3,7 @@
 #include <wozzits/scene/transform_node.h>
 #include <render/render.h>
 #include <wozzits/scene/bake.h>
+#include <wozzits/scene/scene.h>
 #include <wozzits/math/math_types.h>
 #include "wozzits/math/vec3.h"
 #include "wozzits/math/mat4.h"
@@ -602,4 +603,36 @@ TEST(Scene, OutOfOrderUpdatesStillCorrect)
     auto r = wz::math::mul_point(nodes[1].world, { 0,0,0 });
 
     EXPECT_NEAR(r.x, 11.0f, 1e-5f);
+}
+
+TEST(SceneBake, ObjectDrivesEmission)
+{
+    using namespace wz::scene;
+    using namespace wz::core::render;
+    using wz::core::containers::Buffer;
+
+    TransformNode node_storage[1]{};
+    auto nodes = Buffer<TransformNode>::wrap(node_storage, 1);
+
+    nodes.push(TransformNode{
+        .parent = INVALID_TRANSFORM_NODE,
+        .world = wz::math::mat4_identity()
+        });
+
+    Object obj_storage[1]{};
+    auto objects = Buffer<Object>::wrap(obj_storage, 1);
+
+    objects.push(Object{
+        .node = 0,
+        .kind = ObjectKind::Splat,
+        .data_id = 0
+        });
+
+    ObjectData out_storage[1]{};
+    auto out = Buffer<ObjectData>::wrap(out_storage, 1);
+
+    wz::scene::bake::bake_transforms_v2(nodes, objects, out);
+
+    ASSERT_EQ(out.count(), 1);
+    EXPECT_EQ(out.data()[0].scene_node, 0);
 }
