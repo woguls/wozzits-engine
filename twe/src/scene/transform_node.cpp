@@ -23,7 +23,7 @@ namespace wz::scene
         return false;
     }
 
-    void update_world(TransformNode* nodes, uint32_t id)
+    void update_world_transform(TransformNode* nodes, uint32_t id)
     {
         TransformNode& node = nodes[id];
 
@@ -32,18 +32,31 @@ namespace wz::scene
             ? &nodes[node.parent]
             : nullptr;
 
+        // 1. ALWAYS ensure parent is up to date first
         if (parent)
-            update_world(nodes, node.parent);
+            update_world_transform(nodes, node.parent);
 
-        if (!needs_update(node, parent))
+        // 2. compute dirty purely from authoritative signals
+        const bool dirty =
+            node.local_version != node.world_version ||
+            (parent && node.parent_version != parent->world_version);
+
+        // 3. IMPORTANT FIX: if parent changed, ALWAYS force recompute
+        if (parent && node.parent_version != parent->world_version)
+        {
+            // force invalidation regardless of local state
+            node.world_version = node.local_version - 1;
+        }
+
+        if (!dirty)
             return;
 
         const auto local = compute_local(node);
 
-        if (parent)
-            node.world = wz::math::mul(parent->world, local);
-        else
-            node.world = local;
+        node.world =
+            parent
+            ? wz::math::mul(parent->world, local)
+            : local;
 
         node.parent_version = parent ? parent->world_version : 0;
         node.world_version = node.local_version;

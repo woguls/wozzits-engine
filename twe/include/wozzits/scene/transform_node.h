@@ -98,7 +98,7 @@ namespace wz::scene
      * @param nodes Array of all transform nodes.
      * @param id    Index of the node to update.
      */
-    void update_world(
+    void update_world_transform(
         TransformNode* nodes,
         uint32_t id
     );
