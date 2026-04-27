@@ -9,6 +9,95 @@
 
 namespace wz::core::containers
 {
+    /*
+================================================================================
+BUFFER SEMANTIC CONTRACT (ENGINE LEVEL GUARANTEE)
+================================================================================
+
+This file defines the *semantic meaning* of wz::core::containers::Buffer.
+
+It is NOT a dynamic array.
+It is NOT an owning container.
+It is NOT a memory manager.
+
+It is strictly a logical view over externally-owned storage.
+
+--------------------------------------------------------------------------------
+CORE MODEL
+--------------------------------------------------------------------------------
+
+Buffer is defined as:
+
+    (T* data, uint32_t count, uint32_t capacity)
+
+Where:
+
+- data      → pointer to externally owned storage
+- count     → number of *logically valid elements*
+- capacity  → maximum writable elements in storage
+
+--------------------------------------------------------------------------------
+INVARIANTS (HARD RULES)
+--------------------------------------------------------------------------------
+
+1. count ALWAYS represents logical elements, not memory contents.
+
+2. capacity is immutable after construction.
+
+3. Buffer NEVER owns, allocates, or frees memory.
+
+4. Buffer NEVER inspects memory to infer validity.
+
+5. wrap(data, capacity):
+   - ALWAYS creates an EMPTY logical buffer (count = 0)
+
+6. wrap_existing(data, count, capacity):
+   - defines logical size explicitly
+   - does NOT validate memory contents
+
+7. reset():
+   - resets logical size only
+   - does NOT modify underlying memory
+
+--------------------------------------------------------------------------------
+SAFETY MODEL
+--------------------------------------------------------------------------------
+
+- Out-of-bounds protection is enforced via assertions only.
+- Overflow attempts increment diagnostics but do not mutate state.
+- Invalid usage is undefined behavior unless caught by assertions.
+
+--------------------------------------------------------------------------------
+ALGO INTERACTION CONTRACT
+--------------------------------------------------------------------------------
+
+All wz::core::algo functions:
+
+- operate ONLY on [0, count)
+- must NOT access memory beyond count
+- must NOT modify buffer metadata
+- must NOT store references beyond call scope
+- must remain deterministic for identical input
+
+--------------------------------------------------------------------------------
+DESIGN INTENT
+--------------------------------------------------------------------------------
+
+This buffer exists to enable:
+
+- low-overhead iteration
+- deterministic data pipelines (algo)
+- external memory ownership (engine-controlled lifetimes)
+
+It intentionally avoids:
+
+- STL-like ownership semantics
+- hidden allocations
+- implicit resizing behavior
+
+================================================================================
+*/
+
     /**
      * @brief A lightweight non-owning contiguous buffer view.
      *
