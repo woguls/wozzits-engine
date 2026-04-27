@@ -51,7 +51,7 @@ namespace wz::engine
 
         wz::input::InputState input{};
 
-        wz::core::render::RenderIR render_ir{};
+        // wz::core::render::RenderIR render_ir{};
     };
 
     /**

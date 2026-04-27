@@ -73,7 +73,7 @@ namespace wz::engine
 
             input = fctx.input;
 
-            wz::core::render::submit(fctx.render_ir);
+            // wz::core::render::submit(fctx.render_ir);
 
             last = end;
 

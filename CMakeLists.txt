@@ -96,8 +96,11 @@ wz_add_test_1(containers mpsc_queue)
 wz_add_test_1(containers mpsc_ring_buffer)
 wz_add_test_1(containers spsc_queue)
 wz_add_test_1(containers buffer)
+wz_add_test_1(containers buffer_2)
 
-wz_add_test_1(render frame_builder_tests)
+wz_add_test_1(algo algo_test_1)
+
+# wz_add_test_1(render frame_builder_tests)
 
 wz_add_test_1(scene transform_node_test)
 

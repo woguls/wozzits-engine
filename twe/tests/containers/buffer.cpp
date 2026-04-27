@@ -29,7 +29,7 @@ TEST(Buffer, PushWritesSequentially)
     EXPECT_TRUE(b.push(10));
     EXPECT_TRUE(b.push(20));
 
-    EXPECT_EQ(b.count, 2);
+    EXPECT_EQ(b.count(), 2);
     EXPECT_EQ(storage[0], 10);
     EXPECT_EQ(storage[1], 20);
 }
@@ -65,7 +65,7 @@ TEST(Buffer, ResetClearsCountOnly)
 
     b.reset();
 
-    EXPECT_EQ(b.count, 0);
+    EXPECT_EQ(b.count(), 0);
 
     // memory should remain untouched
     EXPECT_EQ(storage[0], 1);
@@ -78,7 +78,7 @@ TEST(Buffer, WrapExistingRespectsInitialCount)
 
     auto b = Buffer<int>::wrap_existing(storage, 2, 4);
 
-    EXPECT_EQ(b.count, 2);
+    EXPECT_EQ(b.count(), 2);
 
     b.push(99);
 
@@ -102,7 +102,7 @@ TEST(Buffer, DoesNotOverwriteBeyondCapacity)
     for (int i = 0; i < 100; i++)
         b.push(i);
 
-    EXPECT_EQ(b.count, 3);
+    EXPECT_EQ(b.count(), 3);
     EXPECT_EQ(storage[0], 0);
     EXPECT_EQ(storage[1], 1);
     EXPECT_EQ(storage[2], 2);
@@ -128,12 +128,12 @@ TEST(Buffer, WrapExistingInitialStateIntegrity)
 
     auto b = Buffer<int>::wrap_existing(storage, 2, 4);
 
-    EXPECT_EQ(b.count, 2);
+    EXPECT_EQ(b.count(), 2);
 
     EXPECT_TRUE(b.push(99));
 
     EXPECT_EQ(storage[2], 99);
-    EXPECT_EQ(b.count, 3);
+    EXPECT_EQ(b.count(), 3);
 }
 
 TEST(Buffer, WrapExistingRejectsInvalidCount)
@@ -147,16 +147,6 @@ TEST(Buffer, WrapExistingRejectsInvalidCount)
     );
 }
 
-TEST(Buffer, CountCannotExceedCapacityManually)
-{
-    int storage[2];
-    auto b = Buffer<int>::wrap(storage, 2);
-
-    b.count = 2;
-
-    EXPECT_FALSE(b.push(1));
-    EXPECT_FALSE(b.has_space(1));
-}
 
 TEST(Buffer, ResetAllowsReuseWithoutCorruption)
 {
@@ -181,7 +171,7 @@ TEST(Buffer, ZeroCapacityStress)
     {
         EXPECT_FALSE(b.push(i));
         EXPECT_FALSE(b.has_space(1));
-        EXPECT_EQ(b.count, 0);
+        EXPECT_EQ(b.count(), 0);
     }
 }
 
@@ -193,11 +183,11 @@ TEST(Buffer, FailedPushDoesNotMutateState)
     b.push(1);
     b.push(2);
 
-    auto before = b.count;
+    auto before = b.count();
 
     EXPECT_FALSE(b.push(999));
 
-    EXPECT_EQ(b.count, before);
+    EXPECT_EQ(b.count(), before);
     EXPECT_EQ(storage[0], 1);
     EXPECT_EQ(storage[1], 2);
 }
@@ -282,18 +272,10 @@ TEST(Buffer, ReuseWithoutResetIsSafeButPredictable)
     EXPECT_FALSE(b.push(3));
 
     // Without reset, state is still full
-    EXPECT_EQ(b.count, 2);
+    EXPECT_EQ(b.count(), 2);
 }
 
-TEST(Buffer, CountCorruptionIsDetected)
-{
-    int storage[2];
-    auto b = Buffer<int>::wrap(storage, 2);
 
-    b.count = 999;
-
-    EXPECT_FALSE(b.push(1), "");
-}
 
 TEST(Buffer, FailedPushLeavesNoPartialState)
 {
@@ -318,7 +300,7 @@ TEST(Buffer, RandomizedStressNoCrash)
     for (int i = 0; i < 10000; i++)
     {
         b.push(i);
-        EXPECT_LE(b.count, b.capacity);
+        EXPECT_LE(b.count(), b.capacity());
     }
 }
 
