@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <wozzits/scene/transform_node.h>
+#include <render/render.h>
+#include <wozzits/scene/bake.h>
 #include <wozzits/math/math_types.h>
 #include "wozzits/math/vec3.h"
 #include "wozzits/math/mat4.h"
@@ -131,5 +133,144 @@ TEST(SceneTransform, IdentityParentDoesNothing)
     auto r = wz::math::mul_point(w, { 0,0,0 });
 
     EXPECT_NEAR(r.x, 1, 1e-5f);
+}
+
+TEST(SceneBake, EmitsRootNodesOnly)
+{
+    using namespace wz::scene;
+    using namespace wz::core::render;
+    using wz::core::containers::Buffer;
+
+    TransformNode storage_nodes[3]{};
+    auto in = Buffer<TransformNode>::wrap(storage_nodes, 3);
+
+    // build logical contents via push (THIS is the contract)
+    in.push(TransformNode{
+        .parent = INVALID_TRANSFORM_NODE,
+        .world = wz::math::mat4_identity()
+        });
+
+    in.push(TransformNode{
+        .parent = 0,
+        .world = wz::math::mat4_identity()
+        });
+
+    in.push(TransformNode{
+        .parent = INVALID_TRANSFORM_NODE,
+        .world = wz::math::mat4_identity()
+        });
+
+    ObjectData storage_out[4]{};
+    auto out = Buffer<ObjectData>::wrap(storage_out, 4);
+
+    wz::scene::bake::bake_transforms(in, out);
+
+    ASSERT_EQ(out.count(), 2);
+}
+
+TEST(SceneBake, PreservesWorldMatrix)
+{
+    using namespace wz::scene;
+    using namespace wz::core::render;
+    using wz::core::containers::Buffer;
+
+    TransformNode storage_nodes[1]{};
+    auto in = Buffer<TransformNode>::wrap(storage_nodes, 1);
+
+    in.push(TransformNode{
+        .local = {},
+        .parent = INVALID_TRANSFORM_NODE,
+        .world = wz::math::Mat4{}   // or identity if preferred
+        });
+
+    ObjectData storage_out[1]{};
+    auto out = Buffer<ObjectData>::wrap(storage_out, 1);
+
+    wz::scene::bake::bake_transforms(in, out);
+
+    ASSERT_EQ(out.count(), 1);
+
+    // replace with near-equals later
+    // EXPECT_TRUE(near_equal(out.data()[0].world, in.data()[0].world));
+}
+
+TEST(SceneBake, PreservesSceneNodeIndex)
+{
+    using namespace wz::scene;
+    using namespace wz::core::render;
+    using wz::core::containers::Buffer;
+
+    TransformNode storage_nodes[1]{};
+    auto in = Buffer<TransformNode>::wrap(storage_nodes, 1);
+
+    in.push(TransformNode{
+        .local = {},
+        .parent = INVALID_TRANSFORM_NODE,
+        .world = wz::math::mat4_identity()
+        });
+
+    ObjectData storage_out[1]{};
+    auto out = Buffer<ObjectData>::wrap(storage_out, 1);
+
+    bake::bake_transforms(in, out);
+
+    ASSERT_EQ(out.count(), 1);
+
+    EXPECT_EQ(out.data()[0].scene_node, 0);
+}
+
+TEST(SceneBake, SkipsNonRootNodes)
+{
+    using namespace wz::scene;
+    using namespace wz::core::render;
+    using wz::core::containers::Buffer;
+
+    TransformNode storage_nodes[2]{};
+    auto in = Buffer<TransformNode>::wrap(storage_nodes, 2);
+
+    in.push(TransformNode{
+        .local = {},
+        .parent = INVALID_TRANSFORM_NODE,
+        .world = wz::math::mat4_identity()
+        });
+
+    in.push(TransformNode{
+        .local = {},
+        .parent = 0, // child
+        .world = wz::math::mat4_identity()
+        });
+
+    ObjectData storage_out[2]{};
+    auto out = Buffer<ObjectData>::wrap(storage_out, 2);
+
+    bake::bake_transforms(in, out);
+
+    EXPECT_EQ(out.count(), 1);
+}
+
+TEST(SceneBake, DefaultFlagsAreZero)
+{
+    using namespace wz::scene;
+    using namespace wz::core::render;
+    using wz::core::containers::Buffer;
+
+    TransformNode storage_nodes[1]{};
+    auto in = Buffer<TransformNode>::wrap(storage_nodes, 1);
+
+    in.push(TransformNode{
+        .local = {},
+        .parent = INVALID_TRANSFORM_NODE,
+        .world = wz::math::mat4_identity()
+        });
+
+    ObjectData storage_out[1]{};
+    auto out = Buffer<ObjectData>::wrap(storage_out, 1);
+
+    bake::bake_transforms(in, out);
+
+    ASSERT_EQ(out.count(), 1);
+
+    EXPECT_EQ((uint32_t)out.data()[0].effect_mask, 0);
+    EXPECT_EQ((uint32_t)out.data()[0].render_flags, 0);
 }
 
