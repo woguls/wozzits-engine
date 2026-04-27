@@ -2,7 +2,6 @@
 #include <cstdint>
 #include <utility>
 
-#include <containers/buffer.h>
 
 /*
 ================================================================================
@@ -13,7 +12,7 @@ This layer provides stateless operation adapters for wz::core::algo.
 It exists ONLY to enable composition syntax.
 
 It does NOT:
-- store state
+- store runtime or conatiner state
 - allocate memory
 - retain buffers
 - build graphs
