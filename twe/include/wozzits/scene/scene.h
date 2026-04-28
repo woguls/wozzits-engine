@@ -21,6 +21,8 @@ namespace wz::scene
         ObjectKind kind;    // what it is
 
         uint32_t data_id;   // index into a type-specific buffer
+
+        uint32_t bounds_id;
     };
 
     struct Scene

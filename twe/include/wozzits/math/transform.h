@@ -70,4 +70,17 @@ namespace wz::math
      * @brief Transforms a point using a matrix.
      */
     Vec3 mul_point(const Mat4& m, const Vec3& p);
+
+    /**
+     * @brief Transforms a point using a matrix.
+     */
+    float max_scale(const Mat4& m);
+
+    Sphere transform_sphere(const Mat4& m, const Sphere& b)
+    {
+        Sphere out;
+        out.center = mul_point(m, b.center);
+        out.radius = b.radius * max_scale(m);
+        return out;
+    }
 }

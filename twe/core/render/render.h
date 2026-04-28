@@ -40,12 +40,12 @@ namespace wz::core::render
         wz::math::Mat4 view;
         wz::math::Mat4 proj;
 
-        uint32_t visible_range_start;
-        uint32_t visible_range_count;
+        wz::math::Frustum frustum;
     };
 
     /**
      * @brief Bounding sphere used for visibility and culling tests.
+     * @todo replace with math::sphere
      */
     struct BoundsData {
         wz::math::Vec3 center;
@@ -216,6 +216,8 @@ namespace wz::core::render
 
         EffectBits effect_mask;   // post / extra passes
         RenderFlags render_flags;  // pipeline behavior
+
+        uint32_t bounds_id; // 
     };
 
     /**

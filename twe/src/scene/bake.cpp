@@ -60,6 +60,7 @@ namespace wz::scene::bake
                 r.scene_node = obj.node;
                 r.effect_mask = (EffectBits)0;
                 r.render_flags = (RenderFlags)0;
+                r.bounds_id = obj.bounds_id;
 
                 return r;
             }

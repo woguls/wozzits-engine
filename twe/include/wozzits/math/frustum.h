@@ -8,5 +8,7 @@ namespace wz::math
 
     bool contains_point(const Frustum& f, const Vec3& p);
 
+    bool intersects_sphere(const Frustum& f, const Sphere& s);
+
     bool intersects_sphere(const Frustum& f, const Vec3& center, float radius);
 }

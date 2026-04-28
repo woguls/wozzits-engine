@@ -3,6 +3,7 @@
 #include <wozzits/math/camera.h>
 #include <wozzits/math/vec3.h>
 #include <cmath>
+#include <algorithm>
 
 namespace wz::math
 {
@@ -211,5 +212,38 @@ namespace wz::math
 
         // apply S → R → T
         return mul(T, mul(R, S));
+    }
+
+    float max_scale(const Mat4& m)
+    {
+        // assumes column-major basis vectors
+        Vec3 x = { m.m[0], m.m[1], m.m[2] };
+        Vec3 y = { m.m[4], m.m[5], m.m[6] };
+        Vec3 z = { m.m[8], m.m[9], m.m[10] };
+
+        float sx = length(x);
+        float sy = length(y);
+        float sz = length(z);
+
+        return std::max(sx, std::max(sy, sz));
+    }
+
+    bool intersects(const Frustum& f, const Sphere& s)
+    {
+        for (int i = 0; i < 6; ++i)
+        {
+            const Vec4& p = f.planes[i].asVec4;
+
+            float distance =
+                p.x * s.center.x +
+                p.y * s.center.y +
+                p.z * s.center.z +
+                p.w;
+
+            if (distance < -s.radius)
+                return false;
+        }
+
+        return true;
     }
 }

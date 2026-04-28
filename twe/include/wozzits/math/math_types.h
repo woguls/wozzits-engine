@@ -32,12 +32,38 @@ namespace wz::math
 
     struct Plane
     {
-        Vec3 normal;   // must be normalized
-        float distance;
+        union
+        {
+            struct
+            {
+                Vec3 normal;   // x, y, z
+                float distance; // w
+            };
+
+            Vec4 asVec4;
+        };
     };
 
     struct Frustum
     {
         Plane planes[6];
     };
+
+    struct Sphere
+    {
+        Vec3 center;
+        float radius;
+    };
+
+    struct Camera
+    {
+        Transform transform;
+
+        float fov_y;
+        float near_plane;
+        float far_plane;
+        float aspect;
+    };
+
+
 }

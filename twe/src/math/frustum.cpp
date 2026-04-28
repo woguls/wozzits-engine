@@ -41,6 +41,11 @@ namespace wz::math
         return true;
     }
 
+    bool intersects_sphere(const Frustum& f, const Sphere& s)
+    {
+        return intersects_sphere(f, s.center, s.radius);
+    }
+
     Frustum frustum_from_view_projection(const Mat4& m)
     {
         Frustum f;
