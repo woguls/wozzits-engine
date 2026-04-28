@@ -1,0 +1,3 @@
+[submodule "libs/wozzits-algo-math"]
+	path = libs/wozzits-algo-math
+	url = https://github.com/woguls/wozzits-algo-math
